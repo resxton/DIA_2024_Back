@@ -1,0 +1,181 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    color: #000000; 
+}
+body{
+    background: #EFEFEF;
+}
+.space{
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Что мы сделали с помощью стилей?
+- установили фон для всей страницы
+- контейнер со всеми элементами составляет 80% от ширины экрана и центрирован по середине за счет того
+
+**Стили контейнера**
+Пусть карточки располагаются по 4 в ряд и расстояние между ними будет 20px
+*/
+
+.container{
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 20px;
+}
+
+.card{
+    border-radius: 20px;
+    background-color: #FFFEFE;
+	width: 350px;
+	height: 380px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.image{
+    border-radius: 20px;
+    object-fit: cover;
+	width: 310px;
+	height: 120px;
+}
+
+.title{
+    margin-top: 16px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.short-description{
+    font-size: 14px;
+    font-weight: 500;
+    width: 100%;
+	height: 102px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.passenger-count{
+	margin-top: 16px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.card-button{
+    padding: 8px 10px; 
+    border-radius: 10px;
+    border: 1px solid #000000;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.down{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.down p{
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.company-name{
+	font-weight: 700;
+	font-size: 48px;
+	padding: 20px;
+}
+
+/* Оформление хедера */
+.header {
+    display: flex;
+	margin-bottom: 20px;
+    align-items: center;
+    padding: 20px 0;
+}
+
+/* Настройка выравнивания навбара сразу после названия */
+.navbar {
+    margin-left: 20px; /* Небольшой отступ между названием компании и навбаром */
+}
+
+.nav-list {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.nav-item {
+    margin: 0 20px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.nav-label {
+    font-size: 16px;
+    font-weight: 600;
+    transition: color 0.3s ease; /* Плавный переход цвета */
+}
+
+/* Эффект при наведении на элементы навбара */
+.nav-item:hover .nav-label {
+    color: #1e90ff; /* Синий цвет при наведении */
+}
+
+a {
+    text-decoration: none;
+}
+
+/* Стили для футера (без изменений цвета) */
+.footer {
+    background-color: #FFFEFE; /* Сохранен прежний цвет футера */
+    color: #333; /* Цвет текста футера */
+    padding: 20px;
+    margin-top: 40px;
+	border-top-left-radius: 20px;
+	border-top-right-radius: 20px;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 20px;
+}
+
+.footer-section {
+    max-width: 200px;
+}
+
+.footer-section h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.footer-section p,
+.footer-section a {
+    font-size: 14px;
+    color: #333; /* Цвет текста футера */
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* Эффект при наведении на ссылки в футере */
+.footer-section a:hover {
+    color: #1e90ff; /* Синий цвет при наведении */
+}
+
+.footer-bottom {
+    text-align: left;
+    padding: 10px;
+    font-size: 14px;
+}
