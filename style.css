@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
-/* Общие стили */
+/* ОБЩИЕ СТИЛИ */
 * {
     margin: 0;
     padding: 0;
@@ -25,59 +25,66 @@ body {
 	min-height: 100vh;
 }
 
-/* Стили для футера */
-.footer {
-    background-color: #FFFEFE; 
-    padding: 20px;
-    margin-top: 40px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-}
-
-.footer-content {
+/* ХЕДЕР */
+.header {
     display: flex;
-    justify-content: space-between;
-    padding-bottom: 20px;
+    align-items: center;
+    padding: 20px 0;
 }
 
-.footer-section {
-    max-width: 200px;
+.navbar {
+    display: flex;
+    align-items: center;
+    margin-left: 20px; /* Небольшой отступ между названием компании и навбаром */
+    width: 100%;
 }
 
-.footer-section h3 {
-    font-size: 18px;
-    margin-bottom: 10px;
+.nav-list {
+    display: flex;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    flex: 1; /* Распределяет пространство между элементами навбара */
 }
 
-.footer-section p,
-.footer-section a {
-    font-size: 14px;
-    text-decoration: none;
-    margin-bottom: 5px;
-    display: block;
+.nav-item {
+    margin: 0 20px;
+    text-align: center;
+    cursor: pointer;
 }
 
-.footer-section a:hover {
+.nav-item.orders .fa-shopping-cart {
+    margin-right: 8px; /* Отступ между иконкой и текстом */
+    font-size: 16px; /* Размер иконки */
+}
+
+.nav-item.orders {
+    margin-left: auto; /* Перемещает элемент вправо */
+}
+
+.nav-label {
+    font-size: 16px;
+    font-weight: 600;
+    transition: color 0.3s ease; /* Плавный переход цвета */
+}
+
+.nav-item:hover .nav-label {
     color: #1e90ff; /* Синий цвет при наведении */
 }
 
-.footer-bottom {
-    text-align: left;
-    padding: 10px;
-    font-size: 14px;
-	font-weight: 600;
+a {
+    text-decoration: none;
 }
 
-/* Стили для контейнера с карточками */
-
+/* КОНТЕЙНЕР И ВНУТРЕННИЕ ЭЛЕМЕНТЫ */
 .container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 20px;
 	flex: 1;
+	width: 100%;
 }
 
-/* Стили карточек */
 .card {
     border-radius: 20px;
     background-color: #FFFEFE;
@@ -137,56 +144,45 @@ body {
     font-weight: 600;
 }
 
-/* Стили для хедера */
-.header {
+/* ФУТЕР */
+.footer {
+    background-color: #FFFEFE; 
+    padding: 20px;
+    margin-top: 40px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.footer-content {
     display: flex;
-    align-items: center;
-    padding: 20px 0;
+    justify-content: space-between;
+    padding-bottom: 20px;
 }
 
-/* Настройка выравнивания навбара */
-.navbar {
-    display: flex;
-    align-items: center;
-    margin-left: 20px; /* Небольшой отступ между названием компании и навбаром */
-    width: 100%;
+.footer-section {
+    max-width: 200px;
 }
 
-.nav-list {
-    display: flex;
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-    flex: 1; /* Распределяет пространство между элементами навбара */
+.footer-section h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
 }
 
-.nav-item {
-    margin: 0 20px;
-    text-align: center;
-    cursor: pointer;
+.footer-section p,
+.footer-section a {
+    font-size: 14px;
+    text-decoration: none;
+    margin-bottom: 5px;
+    display: block;
 }
 
-.nav-item.orders .fa-shopping-cart {
-	margin-right: 8px; /* Отступ между иконкой и текстом */
-	font-size: 16px; /* Размер иконки */
-  }
-  
-
-/* Размещение элемента "Заказы" справа */
-.nav-item.orders {
-    margin-left: auto; /* Перемещает элемент вправо */
-}
-
-.nav-label {
-    font-size: 16px;
-    font-weight: 600;
-    transition: color 0.3s ease; /* Плавный переход цвета */
-}
-
-.nav-item:hover .nav-label {
+.footer-section a:hover {
     color: #1e90ff; /* Синий цвет при наведении */
 }
 
-a {
-    text-decoration: none;
+.footer-bottom {
+    text-align: left;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
 }
