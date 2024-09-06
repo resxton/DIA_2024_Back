@@ -5,8 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Самолеты</title>
-    <link rel="stylesheet" href="style.css"/>
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"> 
   </head>
   <body>
     <div class="space">
@@ -23,10 +23,18 @@
 				<li class="nav-item">
 				  <p class="nav-label">Поршневые самолеты</p>
 				</li>
+				<!-- Корзина -->
 				<li class="nav-item orders">
-					<p class="nav-label"> Заказы <i class="fas fa-shopping-cart"></i></p>
+					<p class="nav-label">Заказы</p>
 				</li>
-				
+				<li class="nav-item search-item">
+					<div class="search-box">
+					  <input type="text" placeholder="Search..." class="search-input">
+					  <button class="search-button">
+						<img src="http://127.0.0.1:9000/planes/search.png" alt="Search" class="search-icon">
+					  </button>					  
+					</div>
+				</li>  
 			  </ul>
 			</nav>
 		</div>
