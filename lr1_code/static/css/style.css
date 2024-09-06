@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
-/* ОБЩИЕ СТИЛИ */
 * {
     margin: 0;
     padding: 0;
@@ -17,7 +16,6 @@ body {
     background: #EFEFEF;
 }
 
-/* Контейнер для всего контента */
 .space {
     width: 80%;
     margin-left: auto;
@@ -25,7 +23,6 @@ body {
 	min-height: 100vh;
 }
 
-/* ХЕДЕР */
 .header {
     display: flex;
     align-items: center;
@@ -44,13 +41,13 @@ body {
     display: flex;
 	color: white;
     align-items: center;
-    height: 100%; /* высота логотипа */
+    height: 100%;
 }
 
 .navbar {
     display: flex;
     align-items: center;
-    margin-left: 20px; /* Небольшой отступ между названием компании и навбаром */
+    margin-left: 20px;
 	margin-right: 20px;
     width: 100%;
 }
@@ -76,8 +73,8 @@ body {
 }
 
 .nav-item:hover {
-    background-color: #3775b8; /* Синий цвет при наведении */
-    color: #fff; /* Цвет текста при наведении */
+    background-color: #3775b8; 
+    color: #fff; 
 }
 
 .nav-label {
@@ -87,7 +84,7 @@ body {
 }
 
 .search-item:hover {
-    background-color: transparent; /* Отключаем фон при наведении */
+    background-color: transparent;
 }
 
 .search-box {
