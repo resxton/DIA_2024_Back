@@ -1,8 +1,5 @@
-.gitattributes
-
 .DS_Store
-
-Assets
 
 .venv
 
+/assets/
