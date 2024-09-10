@@ -9,17 +9,15 @@
 	<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"> 
   </head>
   <body>
-    <div class="space">
-		<div class="header">
-			{% block header %} {% endblock %}
-		</div>
-		  
-        {% block content %} {% endblock %}
+	<div class="header">
+		{% block header %} {% endblock %}
+	</div>
+	  
+	{% block content %} {% endblock %}
 
-        <footer class="footer">
-			{% block footer %} {% endblock %}
-        </footer>
-    </div>
+	<footer class="footer">
+		{% block footer %} {% endblock %}
+	</footer>
   </body>
 </html>
 

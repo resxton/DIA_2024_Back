@@ -11,3 +11,6 @@ def hello(request):
 
 def getHomePage(request):
     return render(request, 'home.html')
+
+def getLongitudeDetail(request):
+    return render(request, 'longitude-detail.html')

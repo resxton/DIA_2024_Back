@@ -17,27 +17,25 @@ body {
 }
 
 .space {
-    width: 80%;
     margin-left: auto;
     margin-right: auto;
 	min-height: 100vh;
 }
 
+/* Global header */
+
 .header {
     display: flex;
     align-items: center;
-    padding: 20px 0;
 	background-color: rgba(0, 0, 0, 0.7);
-	margin-bottom: 20px;
-	border-bottom-left-radius: 20px;
-	border-bottom-right-radius: 20px;
+    margin-bottom: 40px;
+    border-top: 3px solid #1E90FF;
 }
 
 .company-name {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 32px;
+    font-weight: bold;
     margin: 0;
-    padding: 0 20px;
     display: flex;
 	color: white;
     align-items: center;
@@ -58,6 +56,7 @@ body {
     list-style-type: none;
     padding: 0;
     margin: 0;
+    gap: 20px;
     flex: 1;
 }
 
@@ -79,7 +78,7 @@ body {
 
 .nav-label {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
 	color: white;
 }
 
@@ -87,11 +86,20 @@ body {
     background-color: transparent;
 }
 
+.search-item {
+    width: 260px;
+    display: flex;
+    align-items: center;
+    margin-left: auto; /* Сдвигает контейнер поиска вправо */
+    padding: 20px; /* Паддинг вокруг контейнера */
+}
+
 .search-box {
     display: flex;
     border: 1px solid #ffffff;
     border-radius: 5px;
     overflow: hidden;
+    flex: 1; /* Позволяет полю поиска занимать доступное пространство */
 }
 
 .search-input {
@@ -99,21 +107,24 @@ body {
     padding: 8px;
     background: rgba(255, 255, 255, 0.2);
     color: white;
-}
-
-.search-input::placeholder {
-    color: rgba(255, 255, 255, 0.2);
+    flex: 1; /* Заполняет доступное пространство внутри контейнера поиска */
 }
 
 .search-button {
     background: none;
     border: none;
     padding: 8px;
-    width: 31px;
-    height: 31px;
+    width: 30px;
+    height: 30px;
     color: white;
-	background-color: white;
+    background-color: white;
     cursor: pointer;
+}
+
+
+
+.search-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
 }
 
 a {
@@ -128,7 +139,9 @@ a {
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 20px;
 	flex: 1;
-	width: 100%;
+	width: 80%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .card {
@@ -190,13 +203,96 @@ a {
     font-weight: 600;
 }
 
-/* ФУТЕР */
+/* Detail */
+.detail {
+    background-image: url("http://127.0.0.1:9000/longitude-detail/jet-longitude-header.png");
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    color: white;
+}
+
+
+
+/* Стили для детального навигационного меню */
+.detail-navbar {
+    padding: 20px;
+    text-align: center;
+}
+
+.plane-name {
+    color: white;
+    font-size: 32px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.detail-nav-list {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.detail-nav-item {
+    list-style-type: none;
+}
+
+.detail-nav-label {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.detail-nav-label:hover {
+    text-decoration: none;
+}
+
+/* Дополнительные стили для основной информации самолета */
+.detail {
+    background-image: url("http://127.0.0.1:9000/longitude-detail/jet-longitude-header.jpg");
+    background-size: cover;
+    background-position: center;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    color: white;
+    padding: 20px;
+}
+
+.airplane-info h1 {
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.airplane-info h2 {
+    font-size: 30px;
+    font-weight: 600;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.specs {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.specs div {
+    margin-bottom: 10px;
+}
+
+
+
+/* Global footer */
 .footer {
     background-color: #FFFEFE; 
     padding: 20px;
     margin-top: 40px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
+    border-top: 3px solid #1E90FF;
 }
 
 .footer-content {
