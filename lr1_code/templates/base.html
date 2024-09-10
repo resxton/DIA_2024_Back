@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="rus">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> {% block title %} {% endblock %} </title>
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"> 
+  </head>
+  <body>
+    <div class="space">
+		<div class="header">
+			{% block header %} {% endblock %}
+		</div>
+		  
+        {% block content %} {% endblock %}
+
+        <footer class="footer">
+			{% block footer %} {% endblock %}
+        </footer>
+    </div>
+  </body>
+</html>
+

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="rus">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Самолеты</title>
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}"> 
+  </head>
+  <body>
+    <div class="space">
+		<div class="header">
+			<a href="index.html"><h1 class="company-name">NIMBUS</h1></a>
+			<nav class="navbar">
+			  <ul class="nav-list">
+				<li class="nav-item">
+				  <p class="nav-label">Бизнес-джеты</p>
+				</li>
+				<li class="nav-item">
+				  <p class="nav-label">Турбовинтовые самолеты</p>
+				</li>
+				<li class="nav-item">
+				  <p class="nav-label">Поршневые самолеты</p>
+				</li>
+				<!-- Корзина -->
+				<li class="nav-item orders">
+					<p class="nav-label">Заказы</p>
+				</li>
+				<li class="nav-item search-item">
+					<div class="search-box">
+					  <input type="text" placeholder="Search..." class="search-input">
+					  <button class="search-button">
+						<img src="http://127.0.0.1:9000/service/search.png" alt="Search" class="search-icon">
+					  </button>					  
+					</div>
+				</li>  
+			  </ul>
+			</nav>
+		</div>
+		  
+        <div class="container">
+			<div class="card">
+				<div class="info">
+					<img src="http://127.0.0.1:9000/planes/jet-longitude.png" class="image">
+					<p class="title">Cessna Citation Longitude</p>
+					<p class="short-description">Трансатлантическая дальность полета, передовые разработки и незабываемые впечатления от салона - все это в сочетании с самыми низкими прямыми эксплуатационными расходами среди всех самолетов класса «супер-медиум».</p>
+					<p class="passenger-count">12 пассажиров</p>
+				</div>
+				<div class="down">
+					<p>От 28.000.000 $</p>
+					<a href="" class="card-button">Подробнее</a> 
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="info">
+					<img src="http://127.0.0.1:9000/planes/turbo-grandcaravanex.png" class="image">
+					<p class="title">Cessna Grand Caravan EX</p>
+					<p class="short-description">Самолет Cessna Grand Caravan EX известен своей надежной и эффективной работой среди региональных авиакомпаний, чартерных операторов и грузоперевозчиков по всему миру. </p>
+					<p class="passenger-count">14 пассажиров</p>
+				</div>
+				<div class="down">
+					<p>От 3.900.000 $</p>
+					<a href="" class="card-button">Подробнее</a> 
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="info">
+					<img src="http://127.0.0.1:9000/planes/piston-skylane.png" class="image">
+					<p class="title">Cessna Turbo SkyLane</p>
+					<p class="short-description">Современный одномоторный самолет с турбонаддувом, обеспечивающий высокую производительность, комфорт и дальность полета. Идеален для личных путешествий и деловых полетов.	</p>
+					<p class="passenger-count">4 пассажира</p>
+				</div>
+				<div class="down">
+					<p>От 500.000 $</p>
+					<a href="" class="card-button">Подробнее</a> 
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="info">
+					<img src="http://127.0.0.1:9000/planes/jet-latitude.png" class="image">
+					<p class="title">Cessna Citation Latitude</p>
+					<p class="short-description">Cessna Citation Latitude предлагает широкий, плоский пол и 6-футовую кабину и является самым продаваемым бизнес-джетом среднего размера на протяжении восьми лет.</p>
+					<p class="passenger-count">9 пассажиров</p>
+				</div>
+				<div class="down">
+					<p>От 18.000.000 $</p>
+					<a href="" class="card-button">Подробнее</a> 
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="info">
+					<img src="http://127.0.0.1:9000/planes/turbo-caravan.png" class="image">
+					<p class="title">Cessna Caravan</p>
+					<p class="short-description">Благодаря мощному турбовинтовому двигателю самолет обеспечивает редкое сочетание высокой производительности, низких эксплуатационных расходов и способность адаптироваться к самым разнообразным задачам.	</p>
+					<p class="passenger-count">14 пассажиров</p>
+				</div>
+				<div class="down">
+					<p>От 2.900.000 $</p>
+					<a href="" class="card-button">Подробнее</a> 
+				</div>
+			</div>
+
+			<div class="card">
+				<div class="info">
+					<img src="http://127.0.0.1:9000/planes/piston-skyhawk.png" class="image">
+					<p class="title">Cessna SkyHawk</p>
+					<p class="short-description">Поршневой самолет Cessna Skyhawk - самый популярный одномоторный самолет из когда-либо созданных и завоевал репутацию идеального учебного самолета.</p>
+					<p class="passenger-count">4 пассажира</p>
+				</div>
+				<div class="down">
+					<p>От 140.000 $</p>
+					<a href="" class="card-button">Подробнее</a> 
+				</div>
+			</div>
+		</div>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section about">
+                    <h3>О компании</h3>
+                    <p><strong>NIMBUS</strong> — лидер на рынке частных самолетов. Мы предлагаем лучшие решения для бизнес-авиации и частных путешествий.</p>
+                </div>
+                <div class="footer-section links">
+                    <h3>Социальные сети</h3>
+                    <p><a href="#">VK</a></p>
+                    <p><a href="#">Telegram</a></p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2024 <strong>NIMBUS</strong>
+            </div>
+        </footer>
+    </div>
+  </body>
+</html>
+
