@@ -4,7 +4,9 @@ from lr1_code import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('hello/', views.hello),
-	path('', views.getHomePage),
-	path('jet-longitude/', views.getLongitudeDetail)
+    # path('hello/', views.hello),
+	path('', views.getStartPage),
+	path('main/', views.getMainPage),
+	path('detail/', views.getDetailPage),
+	path('configuration/', views.getConfigurationPage)
 ]

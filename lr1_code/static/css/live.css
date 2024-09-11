@@ -1,0 +1,233 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+    /* color: #000000; */
+}
+
+a {
+    cursor: pointer;
+	text-decoration: none;
+}
+
+/* Visited link color */
+a:visited {
+	color: black;
+}
+
+a.footer-element:visited {
+	color: white;
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background: #FFFFFF;
+}
+
+/* Header */
+
+.global-header {
+	background-color: #FFFFFF;
+	padding: 20px;
+
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 24px;
+	font-weight: 500;
+	position: relative; 
+}
+
+.company-name {
+	font-size: 32px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+}
+
+header.company-name {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.configuration {
+	font-size: 24px;
+	padding: 10px;
+	display: flex;
+	gap: 10px;
+}
+
+.counter-circle {
+	width: 29px;
+	height: 29px;
+	background-color: #dcdedc;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+    justify-content: center;
+}
+
+.counter-circle {
+	font-size: 14px;
+    margin: 0;
+}
+
+
+/* Content */
+
+.content {
+	background-color: #FFFFFF;
+	border-top: 3px solid #DCDEDC;
+	padding: 40px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.container {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	gap: 40px;
+	padding: 0;
+	width: 1120px;
+}
+
+.filter {
+	width: 520px;
+	padding: 20px;
+	display: flex;
+	justify-content: space-between;
+	font-size: 16px;
+	font-weight: 700;
+	align-items: center;
+}
+
+#categories {
+	width: 390px;
+	padding: 10px;
+	border: 1px solid black;
+	border-radius: 5px;
+	background-color: white;
+	font-size: 16px;
+	appearance: none;
+}
+
+.card-container {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 20px;
+}
+
+/* Card */
+
+.card {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 320px;
+	height: 360px;
+	background-color:#DCDEDC;
+	font-size: 16px;
+	font-weight: 500;
+}
+
+.card-text {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	padding: 10px;
+}
+
+.card-title, .card-subtitle {
+	font-size: 20px;
+	font-weight: 600;
+	color: #1B3C50;
+}
+
+.card-subtitle {
+	font-size: 16px;
+}
+
+.card-info {
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.card-bottom {
+	display: flex;
+	justify-content: space-between;
+	align-items: center
+}
+
+.card-price {
+	font-weight: 700;
+}
+
+.card-detail {
+	padding: 10px;
+	background-color: #000000;
+	border-radius: 16px;
+}
+
+.card-detail-text {
+	color: #FFFFFF
+}
+
+
+/* Footer */
+
+.global-footer {
+	background-color: #000000;
+	padding: 10px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	color: white;
+	height: 140px;
+}
+
+img.logo {
+	width: 30px;
+	height: 30px;
+}
+
+.about {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	padding-left: 70px;
+	padding-right: 70px;
+	padding-top: 20px;
+	padding-bottom: 20px;
+	width: 170px; /* Adjust as needed */
+	font-size: 24px;
+	font-weight: 500;
+}
+
+.social-network {
+	width: 30px;
+	height: 30px;
+}
+  
+.about-text {
+	font-size: 24px;
+	font-weight: 500;
+}
+
+a.about-text:visited {
+	color: #FFFFFF;
+}
+  
+.footer-element.company-name {
+	padding: 40px;
+}

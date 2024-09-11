@@ -4,37 +4,48 @@
 
 
 {% block header %}
-<nav class="navbar">
-  <ul class="nav-list">
-	<li class="nav-item">
-		<a href="#"><h1 class="company-name">NIMBUS</h1></a>
-	</li>
-	<li class="nav-item">
-	  <p class="nav-label">Бизнес-джеты</p>
-	</li>
-	<li class="nav-item">
-	  <p class="nav-label">Турбовинтовые самолеты</p>
-	</li>
-	<li class="nav-item">
-	  <p class="nav-label">Поршневые самолеты</p>
-	</li>
-	<li class="nav-item orders">
-		<p class="nav-label">Заказы</p>
-	</li>
-	<li class="nav-item search-item">
-		<div class="search-box">
-		  <input type="text" placeholder="Search..." class="search-input">
-		  <button class="search-button">
-			<img src="http://127.0.0.1:9000/service/search.png" alt="Search" class="search-icon">
-		  </button>					  
-		</div>
-	</li>  
-  </ul>
-</nav>
+<div class="header">
+	<nav class="navbar">
+		<ul class="nav-list">
+			<li class="nav-item">
+				<a href="#"><h1 class="company-name">NIMBUS</h1></a>
+			</li>
+			<li class="nav-item">
+			<p class="nav-label">Бизнес-джеты</p>
+			</li>
+			<li class="nav-item">
+			<p class="nav-label">Турбовинтовые самолеты</p>
+			</li>
+			<li class="nav-item">
+			<p class="nav-label">Поршневые самолеты</p>
+			</li>
+			<li class="nav-item orders">
+				<p class="nav-label">Заказ</p>
+			</li>
+			<li class="nav-item search-item">
+				<div class="search-box">
+				<input type="text" placeholder="Поиск..." class="search-input">
+				<button class="search-button">
+					<img src="http://127.0.0.1:9000/service/search.png" alt="Search" class="search-icon">
+				</button>					  
+				</div>
+			</li>  
+		</ul>
+	</nav>
+</div>
 {% endblock %}
 
 
 {% block content %}
+<space>
+<div class="price-filter-container">
+    <p class="label">Цена от</p>
+    <input type="text" class="lower-range" placeholder="0 $">
+    <p class="label">до</p>
+    <input type="text" class="upper-range" placeholder="28.000.000 $">
+</div>
+
+
 <div class="container">
 	<div class="card">
 		<div class="info">
@@ -45,7 +56,7 @@
 		</div>
 		<div class="down">
 			<p>От 28.000.000 $</p>
-			<a href="" class="card-button">Подробнее</a> 
+			<a href="/jet/longitude" class="card-button">Подробнее</a> 
 		</div>
 	</div>
 
@@ -58,7 +69,7 @@
 		</div>
 		<div class="down">
 			<p>От 3.900.000 $</p>
-			<a href="" class="card-button">Подробнее</a> 
+			<a href="/turbo/grand-caravan-ex" class="card-button">Подробнее</a> 
 		</div>
 	</div>
 
@@ -71,7 +82,7 @@
 		</div>
 		<div class="down">
 			<p>От 500.000 $</p>
-			<a href="" class="card-button">Подробнее</a> 
+			<a href="/piston/skylane" class="card-button">Подробнее</a> 
 		</div>
 	</div>
 
@@ -84,7 +95,7 @@
 		</div>
 		<div class="down">
 			<p>От 18.000.000 $</p>
-			<a href="" class="card-button">Подробнее</a> 
+			<a href="/jet/latitude" class="card-button">Подробнее</a> 
 		</div>
 	</div>
 
@@ -97,7 +108,7 @@
 		</div>
 		<div class="down">
 			<p>От 2.900.000 $</p>
-			<a href="" class="card-button">Подробнее</a> 
+			<a href="/turbo/caravan" class="card-button">Подробнее</a> 
 		</div>
 	</div>
 
@@ -110,26 +121,29 @@
 		</div>
 		<div class="down">
 			<p>От 140.000 $</p>
-			<a href="" class="card-button">Подробнее</a> 
+			<a href="/piston/skyhawk" class="card-button">Подробнее</a> 
 		</div>
 	</div>
 </div>
+</space>
 {% endblock %}
 
 
 {% block footer %}
-<div class="footer-content">
-	<div class="footer-section about">
-		<h3>О компании</h3>
-		<p><strong>NIMBUS</strong> — лидер на рынке частных самолетов. Мы предлагаем лучшие решения для бизнес-авиации и частных путешествий.</p>
+<footer class="footer">
+	<div class="footer-content">
+		<div class="footer-section about">
+			<h3>О компании</h3>
+			<p><strong>NIMBUS</strong> — лидер на рынке частных самолетов. Мы предлагаем лучшие решения для бизнес-авиации и частных путешествий.</p>
+		</div>
+		<div class="footer-section links">
+			<h3>Социальные сети</h3>
+			<p><a href="#">VK</a></p>
+			<p><a href="#">Telegram</a></p>
+		</div>
 	</div>
-	<div class="footer-section links">
-		<h3>Социальные сети</h3>
-		<p><a href="#">VK</a></p>
-		<p><a href="#">Telegram</a></p>
-	</div>
-</div>
-<div class="footer-bottom">
-	&copy; 2024 <strong>NIMBUS</strong>
-</div> 
+	<div class="footer-bottom">
+		&copy; 2024 <strong>NIMBUS</strong>
+	</div> 
+</footer>
 {% endblock %}
