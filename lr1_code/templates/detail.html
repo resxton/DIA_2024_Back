@@ -2,20 +2,54 @@
 
 
 {% block title %}
-Detail page
+{{ name }} {{ type }}
 {% endblock title %}
 
 
 {% block header %}
-<h1>Detail page</h1>
+<header class="detail-header">
+	{% comment %} <a href="/main" class="back-to-main">Назад</a> {% endcomment %}
+	<a href="/main" class="company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</div></a>
+</header>
 {% endblock header %}
 
 
 {% block content %}
+<div class="content"> 
+	<div class="detail-card">
+		<h1 class="detail-card-title">{{ name }} {{ category }}</h1>
+		<div class="detail-card-img-container">
+            <img src="http://127.0.0.1:9000/assets/{{ image }}" alt="{{ name }}" class="detail-card-img">
+        </div>
+		<p class="detail-card-text">В этой планировке предусмотрены четыре отдельные жилые зоны, каждая из которых предлагает комфорт и удобства для максимально продуктивных и расслабляющих перелетов. Первая зона — это передняя клубная каюта с просторными креслами, идеально подходящими для неформальных встреч и общения. Далее идет конференц-каюта со столом, рассчитанным на шесть человек, что позволяет проводить переговоры или деловые встречи прямо на борту.<br><br>
 
+			Развлекательная каюта включает удобный диван и сервант с телевизором с большим экраном, предоставляя отличные условия для отдыха и просмотра мультимедийного контента. Последняя зона — это каюта для отдыха, оборудованная диваном, клубным креслом и угловой тумбой с телевизором, где пассажиры могут расслабиться и насладиться тишиной.<br><br>
+			
+			Самолет в данной планировке рассчитан максимум на 18 человек, обеспечивая каждому зону для отдыха и работы в непрерывных дальних перелетах.</p>
+			<h2 class="detail-card-price">
+				Стоимость
+				{% if type == "floorplan" %}
+					планировки
+				{% elif type == "design" %}
+					дизайна
+				{% elif type == "avionics" %}
+					авионики
+				{% elif type == "engine" %}
+					двигателя
+				{% endif %}: {{ price }}
+			</h2>			
+	</div>
+</div>
 {% endblock content %}
 
 
 {% block footer %}
-
+<footer class="global-footer">
+	<a href="/main" class="footer-element company-name"><img src="http://127.0.0.1:9000/service/logo-white.svg" alt="Логотип" class="logo"> Nimbus</div></a>
+	<div class="footer-element about">
+		<a href="#" class="about-text">О нас</a>
+		<a href="https://vk.com/" class="social-network vk"><img class="logo" src="http://127.0.0.1:9000/service/vk-white.svg" alt="VK"></img></a>
+		<a href="https://telegram.org/" class="social-network tg"><img class="logo" src="http://127.0.0.1:9000/service/tg-white.svg" alt="Telegram"></img></a>
+	</div>
+</footer>
 {% endblock footer %}

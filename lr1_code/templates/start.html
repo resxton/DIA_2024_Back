@@ -2,20 +2,47 @@
 
 
 {% block title %}
-Start page
+Самолет
 {% endblock title %}
 
 
 {% block header %}
-<h1>Start page</h1>
+<header class="start-header">
+	<a href="/main" class="start-company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</div></a>
+</header>
 {% endblock header %}
 
 
 {% block content %}
-
+<div class="content"> 
+	<h1 class="detail-card-title">Выберите самолет для конфигурации</h1>
+	<div class="plane-container">
+		<div class="card">
+			<img src="http://127.0.0.1:9000/assets/plane-g7500.png" alt="g7500" class="card-img">
+			<div class="card-text">
+				<h1 class="card-title">Global 7500</h1>
+				<h2 class="card-key-info">До 19 пассажиров</h2>
+				<p class="card-category">Самолет</p>
+				<div class="card-bottom">
+					<p class="card-price">От $ 60.000.000,00</p>
+					<a href="/main" class="card-detail">
+						<p class="card-detail-text">Конфигуратор</p>
+					</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock content %}
 
 
 {% block footer %}
-
+<footer class="global-footer">
+	<a href="/main" class="footer-element company-name"><img src="http://127.0.0.1:9000/service/logo-white.svg" alt="Логотип" class="logo"> Nimbus</div></a>
+	<div class="footer-element about">
+		<a href="#" class="about-text">О нас</a>
+		<a href="https://vk.com/" class="social-network vk"><img class="logo" src="http://127.0.0.1:9000/service/vk-white.svg" alt="VK"></img></a>
+		<a href="https://telegram.org/" class="social-network tg"><img class="logo" src="http://127.0.0.1:9000/service/tg-white.svg" alt="Telegram"></img></a>
+	</div>
+</footer>
 {% endblock footer %}

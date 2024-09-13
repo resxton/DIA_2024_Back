@@ -1,21 +1,87 @@
 {% extends "base.html" %}
 
-
 {% block title %}
-Main page
+Nimbus
 {% endblock title %}
 
-
 {% block header %}
-<h1>Main page</h1>
+<header class="global-header">
+    <a href="/main" class="company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</a>
+</header>
 {% endblock header %}
 
-
 {% block content %}
+<div class="content">
+    <div class="container">
+        <div class="configuration">
+            <a href="/configuration" class="to-configuration">Текущая конфигурация</a>
+            <div class="counter-circle">    
+                <p class="counter">
+                    {{ configuration_counter }}
+                </p>
+            </div>
+        </div>
 
+        <form method="get" action="{% url 'main' %}" class="filter-form">
+            <div class="filter">
+                <label for="categories">Категория:</label>
+                <select name="categories" id="categories">
+                    <option value="" {% if not selected_category %}selected{% endif %}>Выберите категорию</option>
+                    <option value="interior_layout" {% if selected_category == 'interior_layout' %}selected{% endif %}>Компоновка салона</option>
+                    <option value="interior_design" {% if selected_category == 'interior_design' %}selected{% endif %}>Дизайн салона</option>
+                    <option value="avionics" {% if selected_category == 'avionics' %}selected{% endif %}>Авионика</option>
+                    <option value="engine" {% if selected_category == 'engine' %}selected{% endif %}>Двигатель</option>
+                </select>
+            </div>
+
+            <div class="price-filter">
+                <p class="price-filter-text">Цена от</p>
+                <input name="price_min" type="text" class="price-input" placeholder="0" value="{{ selected_price_min }}">
+                <p class="price-filter-text">до</p>
+                <input name="price_max" type="text" class="price-input" placeholder="∞" value="{{ selected_price_max }}">
+            </div>
+
+            <button type="submit" class="filter-btn">
+                Фильтровать
+            </button> 
+        </form>
+        
+        <div class="card-container">
+            {% for configuration_element in configuration_elements %}
+                <div class="card">
+                    <img src="http://127.0.0.1:9000/assets/{{ configuration_element.image }}" alt="{{ configuration_element.name }}" class="card-img">
+                    <div class="card-text">
+                        <h1 class="card-title">{{ configuration_element.name }}</h1>
+                        <h2 class="card-key-info">{{ configuration_element.key_info }}</h2>
+                        <p class="card-category">{{ configuration_element.category }}</p>
+                        <div class="card-bottom">
+                            <p class="card-price">$ {{ configuration_element.price|floatformat:2 }}</p>
+                            <form method="get" action="{% url 'detail_url' configuration_element.id %}" class="detail-form">
+                                <button type="submit" class="card-detail">
+                                    Подробнее
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 {% endblock content %}
 
-
 {% block footer %}
-
+<footer class="global-footer">
+    <a href="/main" class="footer-element company-name"><img src="http://127.0.0.1:9000/service/logo-white.svg" alt="Логотип" class="logo"> Nimbus</a>
+    <div class="footer-element about">
+        <a href="#" class="about-text">О нас</a>
+        <a href="https://vk.com/" class="social-network vk"><img class="logo" src="http://127.0.0.1:9000/service/vk-white.svg" alt="VK"></a>
+        <a href="https://telegram.org/" class="social-network tg"><img class="logo" src="http://127.0.0.1:9000/service/tg-white.svg" alt="Telegram"></a>
+    </div>
+</footer>
 {% endblock footer %}
+
+
+
+
+
