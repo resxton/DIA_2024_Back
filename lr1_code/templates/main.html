@@ -14,12 +14,14 @@ Nimbus
 <div class="content">
     <div class="container">
         <div class="configuration">
-            <a href="/configuration" class="to-configuration">Текущая конфигурация</a>
-            <div class="counter-circle">    
-                <p class="counter">
-                    {{ configuration_counter }}
-                </p>
-            </div>
+            <form method="get" action="{% url 'configuration_url' 2 %}" class="configuration-form">
+                <button type="submit" class="to-configuration">Текущая конфигурация <div class="counter-circle">    
+                    <p class="counter">
+                        {{ configuration_counter }}
+                    </p>
+                </div> </button>
+                
+            </form>
         </div>
 
         <form method="get" action="{% url 'main' %}" class="filter-form">
@@ -27,10 +29,10 @@ Nimbus
                 <label for="categories">Категория:</label>
                 <select name="categories" id="categories">
                     <option value="" {% if not selected_category %}selected{% endif %}>Выберите категорию</option>
-                    <option value="interior_layout" {% if selected_category == 'interior_layout' %}selected{% endif %}>Компоновка салона</option>
-                    <option value="interior_design" {% if selected_category == 'interior_design' %}selected{% endif %}>Дизайн салона</option>
-                    <option value="avionics" {% if selected_category == 'avionics' %}selected{% endif %}>Авионика</option>
-                    <option value="engine" {% if selected_category == 'engine' %}selected{% endif %}>Двигатель</option>
+                    <option {% if selected_category == 'Компоновка салона' %}selected{% endif %}>Компоновка салона</option>
+                    <option {% if selected_category == 'Дизайн салона' %}selected{% endif %}>Дизайн салона</option>
+                    <option {% if selected_category == 'Авионика' %}selected{% endif %}>Авионика</option>
+                    <option {% if selected_category == 'Двигатель' %}selected{% endif %}>Двигатель</option>
                 </select>
             </div>
 
@@ -53,7 +55,7 @@ Nimbus
                     <div class="card-text">
                         <h1 class="card-title">{{ configuration_element.name }}</h1>
                         <h2 class="card-key-info">{{ configuration_element.key_info }}</h2>
-                        <p class="card-category">{{ configuration_element.category }}</p>
+                        <p class="card-category">{{ configuration_element.category }}</p> 
                         <div class="card-bottom">
                             <p class="card-price">$ {{ configuration_element.price|floatformat:2 }}</p>
                             <form method="get" action="{% url 'detail_url' configuration_element.id %}" class="detail-form">

@@ -19,7 +19,7 @@
 	<div class="configuration-content">
 		<h1 class="configuration-title">Текущая конфигурация</h1>
 
-		<div class="card configuration-card">
+		{% comment %} <div class="card configuration-card">
 			<img src="http://127.0.0.1:9000/assets/plane-g7500.png" alt="g7500" class="card-img configuration-card-img">
 			<div class="card-text configuration-card-text">
 				<h1 class="card-title">Global 7500</h1>
@@ -27,38 +27,52 @@
 				<p class="card-category">Самолет</p>
 				<div class="card-bottom">
 					<p class="card-price">От $ 60.000.000,00</p>
-					<a href="/detail" class="card-detail">
-						<p class="card-detail-text">Подробнее</p>
-					</a>
+					<form method="get" action="/detail" class="detail-form">
+						<button type="submit" class="card-detail">
+							Подробнее
+						</button>
+					</form>
 				</div>
+				
 			</div>
-		</div>
+		</div> {% endcomment %}
 
-		<div class="card configuration-card">
-			<img src="http://127.0.0.1:9000/assets/floorplan-globetrotter.png" alt="g7500" class="card-img configuration-card-img">
-			<div class="card-text configuration-card-text">
-				<h1 class="card-title">Globetrotter</h1>
-				<h2 class="card-key-info">15 пассажиров</h2>
-				<p class="card-category">Компоновка салона</p>
-				<div class="card-bottom">
-					<p class="card-price">$ 26.000.000,00</p>
-					<a href="/detail" class="card-detail">
-						<p class="card-detail-text">Подробнее</p>
-					</a>
-				</div>
-			</div>
-		</div>
+		{% for element in config_elements %}
+        <div class="card configuration-card">
+            <img src="http://127.0.0.1:9000/assets/{{ element.image }}" alt="{{ element.name }}" class="card-img configuration-card-img">
+            <div class="card-text configuration-card-text">
+                <h1 class="card-title">{{ element.name }}</h1>
+                <h2 class="card-key-info">{{ element.key_info }}</h2>
+                <p class="card-category">{{ element.category }}</p>
+                <div class="card-bottom">
+                    <p class="card-price">$ {{ element.price|floatformat:2 }}</p>
+                    <form method="get" action="/detail/{{ element.id }}" class="detail-form">
+                        <button type="submit" class="card-detail">
+                            Подробнее
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="no-items">Нет доступных элементов для отображения.</p>
+        {% endfor %}
+
+
 
 		<div class="configuration-info">
 			<p class="configuration-info-text">Как Вас зовут?</p>
-			<input type="text" class="name-input" placeholder="Введите ФИО">
+			<input type="text" class="name-input" placeholder="ФИО" disabled value="{{ customer_name }}">
 			<p class="configuration-info-text">Номер телефона</p>
-			<input type="phone" class="phone-input" placeholder="Введите телефон">
+			<input type="text" class="phone-input" placeholder="Телефон" disabled value="{{ customer_phone }}">
 			<p class="configuration-info-text">Email</p>
-			<input type="email" class="email-input" placeholder="Введите email">
+			<input type="email" class="email-input" placeholder="Email" disabled value="{{ customer_email }}">
 			<p class="configuration-id-text">ID конфигурации</p>
-			<input type="configuration-id" class="id-input" disabled value={{ configuration_id }}>
+			<input type="text" class="id-input" disabled value="{{ configuration_id }}">
+			<p class="configuration-amount-text">Стоимость конфигурации</p>
+			<input type="text" class="amount-input" disabled value="$ {{ configuration_amount|floatformat:2 }}">
 		</div>
+		
 	</div>
 </div>
 {% endblock content %}

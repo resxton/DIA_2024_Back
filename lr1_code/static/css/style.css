@@ -144,6 +144,18 @@ header a.company-name {
 	padding: 10px;
 	display: flex;
 	gap: 10px;
+	flex-direction: row;
+}
+
+.to-configuration {
+	font-size: 24px;
+	font-weight: 700;
+	padding: 10px;
+	display: flex;
+	gap: 10px;
+	flex-direction: row;
+	cursor: pointer;
+	background-color: transparent;
 }
 
 .counter-circle {
@@ -258,6 +270,12 @@ header a.company-name {
 	gap: 20px;
 }
 
+.no-items {
+	font-size: 32px;
+    font-weight: 600;
+    color:#1B3C50;
+}
+
 /* Detail content */
 
 .detail-card {
@@ -277,17 +295,15 @@ header a.company-name {
 }
 
 .detail-card-img-container {
-    position: relative;
     width: 100%; /* Установите ширину контейнера по вашему усмотрению */
-    height: 200px; /* Установите высоту контейнера по вашему усмотрению */
+    height: 400; /* Установите высоту контейнера по вашему усмотрению */
     overflow: hidden;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .detail-card-img {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     width: 100%;
     height: auto; /* Автоматически сохраняет пропорции */
     object-fit: cover; /* Обрезает изображение по размерам контейнера */
@@ -341,7 +357,7 @@ header a.company-name {
 	justify-content: space-between;
 }
 
-.name-input, .phone-input, .email-input, .id-input {
+.name-input, .phone-input, .email-input, .id-input, .amount-input {
 	font-size: 16px;
     padding: 10px;
     width: 230px;
@@ -355,7 +371,7 @@ header a.company-name {
 	align-content: center;
 }
 
-.configuration-id-text {
+.configuration-id-text, .configuration-amount-text {
 	align-content: center;
 	font-weight: 600;
 }
@@ -417,6 +433,7 @@ header a.company-name {
 	padding: 10px;
 	background-color: #000000;
 	border-radius: 16px;
+	font-weight: 700;
     transition: background-color 0.3s ease; 
 }
 
