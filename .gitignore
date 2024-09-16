@@ -1,6 +1,2 @@
 .DS_Store
 
-.venv
-
-/assets/
-lr1_code/templates/live-server.html
