@@ -1,6 +1,5 @@
 from django.http import Http404
 from django.shortcuts import render
-from .models import ConfigurationElement, Configuration
 
 configuration_elements = [
     {
@@ -83,17 +82,15 @@ configurations = [
         'configuration_amount': 86000000,
         'customer_name': "Peter Brown",
         'customer_phone': '+79647938863',
-        'customer_email': 'peterb@gmail.com',
-        'configuration_elements': [3]
-    },
+        'customer_email': 'peterb@gmail.com'
+    }
+]
 
-     {
-        'id': 2,
-        'configuration_amount': 60643000,
-        'customer_name': "Peter Brown",
-        'customer_phone': '+79647938863',
-        'customer_email': 'peterb@gmail.com',
-        'configuration_elements': [5]
+plane = [
+    {
+        'plane': 'Global 7500',
+        'element_id': 3,
+        'configuration_id': 0
     }
 ]
 
@@ -117,13 +114,30 @@ def getMainPage(request):
     if price_max:
         filtered_items = [item for item in filtered_items if float(item['price']) <= float(price_max)]
 
+    # Получение идентификатора конфигурации из таблицы plane
+    plane_id = plane[0]['configuration_id'] if plane else None
+    
+    if plane_id is not None:
+        # Найти конфигурацию по идентификатору
+        configuration = next((config for config in configurations if config['id'] == plane_id), None)
+        if configuration:
+            # Подсчет элементов конфигурации через plane
+            configuration_elements_ids = [p['element_id'] for p in plane if p['configuration_id'] == plane_id]
+            configuration_counter = len(configuration_elements_ids)
+        else:
+            configuration_counter = 0
+    else:
+        configuration_counter = 0
+
     return render(request, 'main.html', {
         'configuration_elements': filtered_items,
-        'configuration_counter': len(configurations[0]['configuration_elements']),
+        'configuration_counter': configuration_counter,
         'selected_category': category,
         'selected_price_min': price_min,
         'selected_price_max': price_max
     })
+
+
 
 def getDetailPage(request, id):
     item = next((item for item in configuration_elements if item['id'] == id), None)
@@ -149,8 +163,16 @@ def getConfigurationPage(request, id):
     if not configuration:
         raise Http404('Конфигурация с таким id не найдена')
 
-    # Получение элементов конфигурации
-    config_elements = [element for element in configuration_elements if element['id'] in configuration['configuration_elements']]
+    # Поиск самолета, связанного с данной конфигурацией
+    plane_data = next((plane_item for plane_item in plane if plane_item['configuration_id'] == id), None)
+    if not plane_data:
+        raise Http404('Самолет для данной конфигурации не найден')
+
+    # Получение идентификаторов элементов конфигурации
+    config_elements_ids = [plane_item['element_id'] for plane_item in plane if plane_item['configuration_id'] == id]
+
+    # Получение элементов конфигурации по идентификаторам
+    config_elements = [element for element in configuration_elements if element['id'] in config_elements_ids]
 
     return render(request, 'configuration.html', {
         'configuration_id': configuration['id'],
@@ -158,6 +180,9 @@ def getConfigurationPage(request, id):
         'customer_phone': configuration['customer_phone'],
         'customer_email': configuration['customer_email'],
         'configuration_amount': configuration['configuration_amount'],
-        'config_elements': config_elements
+        'config_elements': config_elements,
+        'plane_name': plane_data['plane']  # Добавляем название самолета
     })
+
+
 

@@ -14,13 +14,14 @@ Nimbus
 <div class="content">
     <div class="container">
         <div class="configuration">
-            <form method="get" action="{% url 'configuration_url' 2 %}" class="configuration-form">
-                <button type="submit" class="to-configuration">Текущая конфигурация <div class="counter-circle">    
-                    <p class="counter">
-                        {{ configuration_counter }}
-                    </p>
-                </div> </button>
-                
+            <form method="get" action="{% url 'configuration_url' 0 %}" class="configuration-form">
+                <button type="submit" class="to-configuration">Текущая конфигурация 
+                    <div class="counter-circle">    
+                        <p class="counter">
+                            {{ configuration_counter }}
+                        </p>
+                    </div>
+                </button>
             </form>
         </div>
 
