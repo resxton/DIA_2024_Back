@@ -39,7 +39,7 @@
 
 		{% for element in config_elements %}
         <div class="card configuration-card">
-            <img src="http://127.0.0.1:9000/assets/{{ element.image }}" alt="{{ element.name }}" class="card-img configuration-card-img">
+            <img src="{{ element.image }}" alt="{{ element.name }}" class="card-img configuration-card-img">
             <div class="card-text configuration-card-text">
                 <h1 class="card-title">{{ element.name }}</h1>
                 <h2 class="card-key-info">{{ element.key_info }}</h2>

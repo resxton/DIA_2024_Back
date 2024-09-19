@@ -52,7 +52,7 @@ Nimbus
         <div class="card-container">
             {% for configuration_element in configuration_elements %}
                 <div class="card">
-                    <img src="http://127.0.0.1:9000/assets/{{ configuration_element.image }}" alt="{{ configuration_element.name }}" class="card-img">
+                    <img src="{{ configuration_element.image }}" alt="{{ configuration_element.name }}" class="card-img">
                     <div class="card-text">
                         <h1 class="card-title">{{ configuration_element.name }}</h1>
                         <h2 class="card-key-info">{{ configuration_element.key_info }}</h2>

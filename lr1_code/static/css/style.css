@@ -64,6 +64,11 @@ body {
 	display: flex;
 	align-items: center;
     justify-content: center;
+	transition: color ease 0.3s; 
+}
+
+.company-name:hover {
+	color: #84684e;
 }
 
 header a.company-name {
@@ -148,15 +153,21 @@ header a.company-name {
 }
 
 .to-configuration {
-	font-size: 24px;
-	font-weight: 700;
-	padding: 10px;
-	display: flex;
-	gap: 10px;
-	flex-direction: row;
-	cursor: pointer;
-	background-color: transparent;
+    font-size: 24px;
+    font-weight: 700;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    flex-direction: row;
+    cursor: pointer;
+    background-color: transparent;
+    transition: color ease 0.3s; 
 }
+
+.to-configuration:hover {
+    color: #84684e;
+}
+
 
 .counter-circle {
 	width: 29px;
@@ -509,7 +520,7 @@ img.logo {
 	height: 30px;
 }
 
-.footer- .company-name a:visited {
+.footer .company-name a:visited {
     color: white;
 }
   
