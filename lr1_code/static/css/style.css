@@ -252,7 +252,7 @@ header a.company-name {
 }
 
 .filter-btn:hover {
-    background-color: #1B3C50;
+    background-color: #89674A;
 }
 
 .filter-btn:active {
@@ -281,11 +281,6 @@ header a.company-name {
 	gap: 20px;
 }
 
-.no-items {
-	font-size: 32px;
-    font-weight: 600;
-    color:#1B3C50;
-}
 
 /* Detail content */
 
@@ -302,7 +297,7 @@ header a.company-name {
 .detail-card-title {
     font-size: 32px;
     font-weight: 600;
-    color:#1B3C50;
+    color: #003e51;
 }
 
 .detail-card-img-container {
@@ -417,7 +412,7 @@ header a.company-name {
 .card-title, .card-key-info {
 	font-size: 20px;
 	font-weight: 600;
-	color: #1B3C50;
+	color: #003e51;
 }
 
 .card-key-info {
@@ -449,7 +444,7 @@ header a.company-name {
 }
 
 .card-detail:hover {
-    background-color: #1B3C50;
+    background-color: #89674A;
 }
 
 .card-detail:active {
@@ -540,12 +535,12 @@ img.logo {
     bottom: -2px;
     width: 0;
     height: 2px;
-    background-color: #84684e;
+    background-color: #89674A;
     transition: width 0.3s ease, left 0.3s ease;
 }
 
 .about-text:hover {
-    color: #84684e; /* Цвет текста при наведении */
+    color: #89674A; /* Цвет текста при наведении */
 }
 
 .about-text:hover::after {
