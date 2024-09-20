@@ -1,5 +1,19 @@
 from django.http import Http404
 from django.shortcuts import render
+from lr1_code.models import ConfigurationElement, Configuration, Plane
+
+import psycopg2
+
+conn = psycopg2.connect(dbname="jet_configuration_system", host="localhost", user="admin", password="admin", port="5432")
+
+cursor = conn.cursor()
+ 
+cursor.execute("CREATE TABLE IF NOT EXISTS test_table (id SERIAL PRIMARY KEY,name TEXT); INSERT INTO test_table (name) VALUES ('Test Entry') ON CONFLICT (id) DO NOTHING;  -- Не добавлять, если запись уже существует")
+ 
+conn.commit()  
+ 
+cursor.close()
+conn.close()
 
 configuration_elements = [
     {
@@ -139,21 +153,21 @@ def getMainPage(request):
     })
 
 
-
 def getDetailPage(request, id):
-    item = next((item for item in configuration_elements if item['id'] == id), None)
-
-    if not item:
+    try:
+        # Получаем элемент конфигурации из базы данных по id
+        item = ConfigurationElement.objects.get(id=id)
+    except ConfigurationElement.DoesNotExist:
         raise Http404('Элемент с таким id не найден')
 
     return render(request, 'detail.html', {
-        'id': item['id'],
-        'name': item['name'],
-        'price': item['price'],
-        'key_info': item['key_info'],
-        'category': item['category'],
-        'image': item['image'],
-        'detail_text': item['detail_text']
+        'id': item.id,
+        'name': item.name,
+        'price': item.price,
+        'key_info': item.key_info,
+        'category': item.category,
+        'image': item.image,
+        'detail_text': item.detail_text
     })
 
 
