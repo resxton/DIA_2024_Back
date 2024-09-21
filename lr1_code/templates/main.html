@@ -14,7 +14,7 @@ Nimbus
 <div class="content">
     <div class="container">
         <div class="configuration">
-            <form method="get" action="{% url 'configuration_url' 0 %}" class="configuration-form">
+            <form method="get" action="{% url 'configuration_url' current_configuration.id %}" class="configuration-form">
                 <button type="submit" class="to-configuration">Текущая конфигурация 
                     <div class="counter-circle">    
                         <p class="counter">
@@ -22,7 +22,7 @@ Nimbus
                         </p>
                     </div>
                 </button>
-            </form>
+            </form>            
         </div>
 
         <form method="get" action="{% url 'main' %}" class="filter-form">
@@ -39,9 +39,9 @@ Nimbus
 
             <div class="price-filter">
                 <p class="price-filter-text">Цена от</p>
-                <input name="price_min" type="text" class="price-input" placeholder="0" value="{{ selected_price_min }}">
+                <input name="price_min" type="number" class="price-input" placeholder="0" value="{{ selected_price_min }}">
                 <p class="price-filter-text">до</p>
-                <input name="price_max" type="text" class="price-input" placeholder="∞" value="{{ selected_price_max }}">
+                <input name="price_max" type="number" class="price-input" placeholder="∞" value="{{ selected_price_max }}">
             </div>
 
             <button type="submit" class="filter-btn">
@@ -56,10 +56,19 @@ Nimbus
                     <div class="card-text">
                         <h1 class="card-title">{{ configuration_element.name }}</h1>
                         <h2 class="card-key-info">{{ configuration_element.key_info }}</h2>
-                        <p class="card-category">{{ configuration_element.category }}</p> 
+                        <div class="card-middle">
+                            <p class="card-category">{{ configuration_element.category }}</p> 
+                            <form method="post" class="add-form" action="{% url 'add_element_to_configuration' configuration_element.id%}">
+                                {% csrf_token %}
+                                <button type="submit" class="add-btn" >
+                                    Добавить
+                                </button>
+                            </form>
+                        </div>
+        
                         <div class="card-bottom">
                             <p class="card-price">$ {{ configuration_element.price|floatformat:2 }}</p>
-                            <form method="get" action="{% url 'detail_url' configuration_element.id %}" class="detail-form">
+                            <form method="get" action="{% url 'detail_url' configuration_element.id %}">
                                 <button type="submit" class="card-detail">
                                     Подробнее
                                 </button>
