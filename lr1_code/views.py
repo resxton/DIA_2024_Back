@@ -1,19 +1,7 @@
 from django.http import Http404
 from django.shortcuts import render
 from lr1_code.models import ConfigurationElement, Configuration, Plane
-
 import psycopg2
-
-conn = psycopg2.connect(dbname="jet_configuration_system", host="localhost", user="admin", password="admin", port="5432")
-
-cursor = conn.cursor()
- 
-cursor.execute("CREATE TABLE IF NOT EXISTS test_table (id SERIAL PRIMARY KEY,name TEXT); INSERT INTO test_table (name) VALUES ('Test Entry') ON CONFLICT (id) DO NOTHING;  -- Не добавлять, если запись уже существует")
- 
-conn.commit()  
- 
-cursor.close()
-conn.close()
 
 configuration_elements = [
     {
