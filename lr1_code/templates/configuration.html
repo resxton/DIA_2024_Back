@@ -43,7 +43,7 @@
             <div class="card-text configuration-card-text">
                 <h1 class="card-title">{{ element.name }}</h1>
                 <h2 class="card-key-info">{{ element.key_info }}</h2>
-				<h2 class="card-key-info">{{ plane_name }}</h2>
+				<h2 class="card-key-info">{{ plane }}</h2>
                 <p class="card-category">{{ element.category }}</p>
                 <div class="card-bottom">
                     <p class="card-price">$ {{ element.price|floatformat:2 }}</p>
@@ -65,7 +65,7 @@
 			<p class="configuration-info-text">Номер телефона</p>
 			<input type="text" class="phone-input" placeholder="Телефон" disabled value="{{ customer_phone }}">
 			<p class="configuration-info-text">Самолет</p>
-			<input type="plane" class="plane-input" placeholder="plane_name" disabled value="{{ plane_name }}">
+			<input type="plane" class="plane-input" placeholder="plane_name" disabled value="{{ plane }}">
 			<p class="configuration-id-text">ID конфигурации</p>
 			<input type="text" class="id-input" disabled value="{{ configuration_id }}">
 			<p class="configuration-amount-text">Стоимость конфигурации</p>

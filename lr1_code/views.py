@@ -176,7 +176,8 @@ def getConfigurationPage(request, id):
         'customer_phone': configuration['customer_phone'],
         'customer_email': configuration['customer_email'],
         'configuration_amount': configuration['configuration_amount'],
-        'config_elements': config_elements
+        'config_elements': config_elements,
+        'plane': 'Global 7500'
     })
 
 
