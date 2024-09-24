@@ -82,7 +82,8 @@ configurations = [
         'configuration_amount': 86000000,
         'customer_name': "Peter Brown",
         'customer_phone': '+79647938863',
-        'customer_email': 'peterb@gmail.com'
+        'customer_email': 'peterb@gmail.com',
+        'configuration_elements': [3]
     }
 ]
 
@@ -156,7 +157,6 @@ def getDetailPage(request, id):
         'detail_text': item['detail_text']
     })
 
-
 def getConfigurationPage(request, id):
     # Поиск конфигурации по id
     configuration = next((config for config in configurations if config['id'] == id), None)
@@ -164,13 +164,8 @@ def getConfigurationPage(request, id):
     if not configuration:
         raise Http404('Конфигурация с таким id не найдена')
 
-    # Поиск самолета, связанного с данной конфигурацией
-    plane_data = next((plane_item for plane_item in plane if plane_item['configuration_id'] == id), None)
-    if not plane_data:
-        raise Http404('Самолет для данной конфигурации не найден')
-
-    # Получение идентификаторов элементов конфигурации
-    config_elements_ids = [plane_item['element_id'] for plane_item in plane if plane_item['configuration_id'] == id]
+    # Получение элементов конфигурации из массива configuration_elements в конфигурации
+    config_elements_ids = configuration['configuration_elements']
 
     # Получение элементов конфигурации по идентификаторам
     config_elements = [element for element in configuration_elements if element['id'] in config_elements_ids]
@@ -181,9 +176,9 @@ def getConfigurationPage(request, id):
         'customer_phone': configuration['customer_phone'],
         'customer_email': configuration['customer_email'],
         'configuration_amount': configuration['configuration_amount'],
-        'config_elements': config_elements,
-        'plane_name': plane_data['plane']  # Добавляем название самолета
+        'config_elements': config_elements
     })
+
 
 
 
