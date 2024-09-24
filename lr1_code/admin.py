@@ -9,7 +9,7 @@ class ConfigurationElementAdmin(admin.ModelAdmin):
 
 @admin.register(Configuration)
 class ConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'customer_name', 'status', 'created_at', 'total_price')
+    list_display = ('id', 'customer_name', 'status', 'created_at', 'updated_at', 'total_price')
     search_fields = ('customer_name', 'customer_email')
     list_filter = ('status',)
 
