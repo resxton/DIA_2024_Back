@@ -31,7 +31,7 @@ class Configuration(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)  # Дата завершения
     customer_name = models.CharField(max_length=255)  # Имя клиента
     customer_phone = models.CharField(max_length=20)  # Телефон клиента
-    customer_email = models.EmailField()  # Email клиента
+    customer_email = models.CharField(max_length=255)
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Итоговая цена
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_configurations')  # Создатель
     moderator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='moderated_configurations')  # Модератор
