@@ -51,7 +51,7 @@ class Plane(models.Model):
     id = models.AutoField(primary_key=True)
     configuration = models.ForeignKey(Configuration, on_delete=models.CASCADE)  # Заявка
     element = models.ForeignKey(ConfigurationElement, on_delete=models.CASCADE)  # Комплектация
-    plane = models.CharField(max_length=255)
+    plane = models.CharField(max_length=255, default='Global 7500')
 
     class Meta:
         db_table = 'planes'

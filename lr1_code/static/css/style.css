@@ -501,14 +501,13 @@ header a.company-name {
 
 .configuration-card {
 	width: 680px;
-	height: 380px;
+	height: 420px;
 	align-items: center;
 }
 
 .configuration-card-text {
 	width: 660px;
-	height: 180px;
-	gap: 10px;
+	height: 220px;
 	padding: 10px;
 }
 

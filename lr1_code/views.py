@@ -18,17 +18,6 @@ def getMainPage(request):
     else:
         current_configuration = None
 
-    # Если текущей заявки нет, создаем новую
-    if not current_configuration:
-        current_configuration = Configuration.objects.create(
-            status='draft',
-            customer_name='',
-            customer_phone='',
-            customer_email=''
-        )
-        # Сохраняем ID новой заявки в сессии
-        request.session['current_configuration_id'] = current_configuration.id
-
     category = request.GET.get('categories', '')
     price_min = request.GET.get('price_min', '')
     price_max = request.GET.get('price_max', '')
@@ -59,7 +48,6 @@ def getMainPage(request):
     })
 
 
-
 def getDetailPage(request, id):
     try:
         item = ConfigurationElement.objects.get(id=id)
@@ -81,7 +69,8 @@ def getConfigurationPage(request, id):
     try:
         configuration = Configuration.objects.get(id=id)
     except Configuration.DoesNotExist:
-        raise Http404('Конфигурация с таким id не найдена')
+        print('Конфигурация с таким id не найдена')
+        return redirect('main')
 
     if configuration.status == 'deleted':
         return redirect('main')
@@ -90,7 +79,8 @@ def getConfigurationPage(request, id):
     planes = Plane.objects.filter(configuration=configuration)
 
     if not planes.exists():
-        raise Http404('Самолет для данной конфигурации не найден')
+        print('Самолет для данной конфигурации не найден')
+        return redirect('main')
 
     # Получаем элементы конфигурации по идентификаторам
     config_elements_ids = planes.values_list('element_id', flat=True)
@@ -106,37 +96,76 @@ def getConfigurationPage(request, id):
         'plane_name': planes.first().plane if planes.exists() else 'Нет самолета'
     })
 
+
 def deleteConfiguration(request, id):
     if request.method == 'POST':
+        # Подсчитываем сумму конфигурации перед удалением
+        total_price = calculate_configuration_total(id)
+        
+        # Обновляем статус конфигурации на удаленный
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE configurations SET status = 'deleted' WHERE id = %s", [id])
-            print("updated")
-        return redirect('main')  # Перенаправление на главную страницу или на страницу с заявками
+            cursor.execute("UPDATE configurations SET status = 'deleted', total_price = %s WHERE id = %s", [total_price, id])
+            print(f"Конфигурация удалена. Общая сумма: {total_price}")
+        
+        return redirect('main')
     else:
         return Http404('Метод не поддерживается')
-    
+
+
 
 def addConfigurationElement(request, element_id):
-    # Получаем ID текущей заявки из сессии
     current_configuration_id = request.session.get('current_configuration_id')
 
     if not current_configuration_id:
-        return redirect('main')  # Перенаправляем, если текущей заявки нет
+        # Если заявки еще нет, создаем новую
+        configuration = Configuration.objects.create(
+            status='draft',
+            customer_name='Guest',
+            customer_phone='',
+            customer_email=''
+        )
+        request.session['current_configuration_id'] = configuration.id
+    else:
+        # Ищем текущую заявку
+        configuration = Configuration.objects.filter(id=current_configuration_id, status='draft').first()
 
-    # Получаем текущую заявку
-    configuration = Configuration.objects.filter(id=current_configuration_id, status='draft').first()
-    
-    if not configuration:
-        return redirect('main')  # Перенаправляем, если заявка не найдена
+        # Если текущей заявки нет, создаем новую (на случай, если черновик был удален)
+        if not configuration:
+            configuration = Configuration.objects.create(
+                status='draft',
+                customer_name='Guest',
+                customer_phone='',
+                customer_email=''
+            )
+            request.session['current_configuration_id'] = configuration.id
+
+    # Проверяем, есть ли уже этот элемент в заявке
+    existing_plane = Plane.objects.filter(configuration_id=configuration.id, element_id=element_id).exists()
+
+    if existing_plane:
+        print('Этот элемент уже добавлен в конфигурацию')
+        return redirect('main')
 
     # Получаем элемент, который нужно добавить
     try:
         element = ConfigurationElement.objects.get(id=element_id)
     except ConfigurationElement.DoesNotExist:
-        return redirect('main')  # Перенаправляем, если элемент не найден
+        return redirect('main')
 
     # Добавляем элемент в таблицу Plane
-    Plane.objects.create(configuration_id=configuration.id, element_id=element.id, plane='')
+    Plane.objects.create(configuration_id=configuration.id, element_id=element.id, plane='Global 7500')
+
+    return redirect('main')
 
 
-    return redirect('main')  # Перенаправляем на страницу конфигурации
+def calculate_configuration_total(configuration_id):
+    # Получаем все самолеты, связанные с данной конфигурацией
+    planes = Plane.objects.filter(configuration_id=configuration_id)
+    total_sum = 0
+
+    # Суммируем цены элементов конфигурации
+    for plane in planes:
+        element = ConfigurationElement.objects.get(id=plane.element_id)
+        total_sum += element.price
+
+    return total_sum

@@ -14,16 +14,22 @@ Nimbus
 <div class="content">
     <div class="container">
         <div class="configuration">
-            <form method="get" action="{% url 'configuration_url' current_configuration.id %}" class="configuration-form">
-                <button type="submit" class="to-configuration">Текущая конфигурация 
-                    <div class="counter-circle">    
-                        <p class="counter">
-                            {{ configuration_counter }}
-                        </p>
-                    </div>
-                </button>
-            </form>            
+            {% if current_configuration %}
+                <form method="get" action="{% url 'configuration_url' current_configuration.id %}" class="configuration-form">
+                    <button type="submit" class="to-configuration">
+                        Текущая конфигурация 
+                        <div class="counter-circle">    
+                            <p class="counter">
+                                {{ configuration_counter }}
+                            </p>
+                        </div>
+                    </button>
+                </form>
+            {% else %}
+                <p>У вас нет текущей конфигурации. Добавьте элемент, чтобы начать.</p>
+            {% endif %}
         </div>
+        
 
         <form method="get" action="{% url 'main' %}" class="filter-form">
             <div class="filter">

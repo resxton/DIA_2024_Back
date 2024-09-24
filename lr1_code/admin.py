@@ -3,13 +3,13 @@ from .models import ConfigurationElement, Configuration, Plane
 
 @admin.register(ConfigurationElement)
 class ConfigurationElementAdmin(admin.ModelAdmin):
-    list_display = ('name', 'price', 'key_info', 'category', 'is_deleted')
+    list_display = ('id', 'name', 'price', 'key_info', 'category', 'is_deleted')
     search_fields = ('name', 'category', 'price')
     list_filter = ('is_deleted',)
 
 @admin.register(Configuration)
 class ConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('customer_name', 'status', 'created_at', 'total_price')
+    list_display = ('id', 'customer_name', 'status', 'created_at', 'total_price')
     search_fields = ('customer_name', 'customer_email')
     list_filter = ('status',)
 
