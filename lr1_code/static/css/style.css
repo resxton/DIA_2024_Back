@@ -422,6 +422,7 @@ header a.company-name {
 .card-category {
 	font-size: 14px;
 	font-weight: 600;
+	color: #666666;
 }
 
 .card-bottom {
