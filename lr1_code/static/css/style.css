@@ -438,10 +438,12 @@ body {
 }
 
 .card-img {
-	max-width: 320px;
-	max-height: auto;
-	align-self: auto;
+    width: 320px; /* Фиксированная ширина */
+    height: 180px; /* Фиксированная высота */
+    object-fit: cover; /* Изображение будет обрезано по высоте, чтобы заполнить контейнер */
 }
+
+
 
 .card-text, .configuration-card-text {
 	display: flex;

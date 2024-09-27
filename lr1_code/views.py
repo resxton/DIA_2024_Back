@@ -1,7 +1,8 @@
 from django.db import connection
 from django.http import Http404
 from django.shortcuts import redirect, render
-from lr1_code.models import ConfigurationElement, Configuration, Plane
+from lr1_code.models import ConfigurationElement, Configuration, ConfigurationMap
+from django.db.models import F
 
 
 def getStartPage(request):
@@ -35,8 +36,8 @@ def getConfigurationElementsPage(request):
         filtered_items = filtered_items.filter(price__lte=float(price_max))
 
     # Получаем идентификаторы элементов, связанных с текущей конфигурацией
-    planes = Plane.objects.filter(configuration=current_configuration)
-    configuration_counter = planes.count()  # Подсчитываем количество элементов в текущей заявке
+    elements = ConfigurationMap.objects.filter(configuration=current_configuration)
+    configuration_counter = elements.count()  # Подсчитываем количество элементов в текущей заявке
 
     return render(request, 'main.html', {
         'configuration_elements': filtered_items,
@@ -76,25 +77,27 @@ def getConfigurationPage(request, id):
         return redirect('configuration_elements')
 
     # Получаем самолеты, связанные с данной конфигурацией
-    planes = Plane.objects.filter(configuration=configuration)
+    elements = ConfigurationMap.objects.filter(configuration=configuration)
 
-    if not planes.exists():
+    if not elements.exists():
         print('Самолет для данной конфигурации не найден')
         return redirect('configuration_elements')
 
-    # Получаем элементы конфигурации по идентификаторам
-    config_elements_ids = planes.values_list('element_id', flat=True)
-    config_elements = ConfigurationElement.objects.filter(id__in=config_elements_ids)
+    # Получаем элементы конфигурации по идентификаторам и добавляем количество
+    config_elements = ConfigurationElement.objects.filter(
+        id__in=elements.values_list('element_id', flat=True)
+    ).annotate(count=F('configurationmap__count'))
 
     return render(request, 'configuration.html', {
         'configuration_id': configuration.id,
         'customer_name': configuration.customer_name,
         'customer_phone': configuration.customer_phone,
         'customer_email': configuration.customer_email,
-        'configuration_amount': configuration.total_price,
-        'config_elements': config_elements,
-        'plane_name': planes.first().plane if planes.exists() else 'Нет самолета'
+        'configuration_amount': calculate_configuration_total(configuration.id),
+        'plane': configuration.plane,
+        'config_elements': config_elements
     })
+
 
 
 def deleteConfiguration(request, id):
@@ -121,8 +124,8 @@ def addConfigurationElement(request, element_id):
         configuration = Configuration.objects.create(
             status='draft',
             customer_name='Guest',
-            customer_phone='',
-            customer_email=''
+            customer_phone='+123456789',
+            customer_email='a@a.a'
         )
         request.session['current_configuration_id'] = configuration.id
     else:
@@ -134,15 +137,15 @@ def addConfigurationElement(request, element_id):
             configuration = Configuration.objects.create(
                 status='draft',
                 customer_name='Guest',
-                customer_phone='',
-                customer_email=''
+                customer_phone='+123456789',
+                customer_email='a@a.a'
             )
             request.session['current_configuration_id'] = configuration.id
 
     # Проверяем, есть ли уже этот элемент в заявке
-    existing_plane = Plane.objects.filter(configuration_id=configuration.id, element_id=element_id).exists()
+    existing_element = ConfigurationMap.objects.filter(configuration_id=configuration.id, element_id=element_id).exists()
 
-    if existing_plane:
+    if existing_element:
         print('Этот элемент уже добавлен в конфигурацию')
         return redirect('configuration_elements')
 
@@ -152,21 +155,21 @@ def addConfigurationElement(request, element_id):
     except ConfigurationElement.DoesNotExist:
         return redirect('configuration_elements')
 
-    # Добавляем элемент в таблицу Plane
-    Plane.objects.create(configuration_id=configuration.id, element_id=element.id, plane='Global 7500')
+    # Добавляем элемент в таблицу ConfigurationMap
+    ConfigurationMap.objects.create(configuration_id=configuration.id, element_id=element.id, count=1)
 
     return redirect('configuration_elements')
 
 
 def calculate_configuration_total(configuration_id):
     # Получаем все самолеты, связанные с данной конфигурацией
-    planes = Plane.objects.filter(configuration_id=configuration_id)
+    elements = ConfigurationMap.objects.filter(configuration_id=configuration_id)
     
-    total_sum = 0
+    total_sum = 60000000
 
     # Суммируем цены элементов конфигурации
-    for plane in planes:
-        element = ConfigurationElement.objects.get(id=plane.element_id)
+    for el in elements:
+        element = ConfigurationElement.objects.get(id=el.element_id)
         total_sum += element.price
 
     return total_sum

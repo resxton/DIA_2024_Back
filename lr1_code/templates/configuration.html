@@ -46,6 +46,11 @@
 			</div>
 		</div>
 		{% endfor %}
+
+		<form action="{% url 'delete_configuration' configuration_id %}" method="post" class="delete-form">
+			{% csrf_token %}
+			<button type="submit" class="delete-btn" title="Удалить заявку">Удалить</button>
+		</form>
 	</div>
 </div>
 {% endblock content %}

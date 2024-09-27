@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ConfigurationElement, Configuration, Plane
+from .models import ConfigurationElement, Configuration, ConfigurationMap
 
 @admin.register(ConfigurationElement)
 class ConfigurationElementAdmin(admin.ModelAdmin):
@@ -13,9 +13,9 @@ class ConfigurationAdmin(admin.ModelAdmin):
     search_fields = ('customer_name', 'customer_email')
     list_filter = ('status',)
 
-@admin.register(Plane)
+@admin.register(ConfigurationMap)
 class PlaneAdmin(admin.ModelAdmin):
-    list_display = ('configuration', 'element', 'plane')
-    search_fields = ('plane',)
+    list_display = ('configuration', 'element', 'count')
+    search_fields = ('count',)
     list_filter = ('configuration', 'element')
 

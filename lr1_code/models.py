@@ -35,7 +35,8 @@ class Configuration(models.Model):
     total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Итоговая цена
     creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_configurations')  # Создатель
     moderator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='moderated_configurations')  # Модератор
-    
+    plane = models.CharField(max_length=255, default='Global 7500')
+
     class Meta:
         db_table = 'configurations'
 
@@ -47,12 +48,12 @@ class Configuration(models.Model):
 
 
     
-class Plane(models.Model):
+class ConfigurationMap(models.Model):
     id = models.AutoField(primary_key=True)
     configuration = models.ForeignKey(Configuration, on_delete=models.CASCADE)  # Заявка
     element = models.ForeignKey(ConfigurationElement, on_delete=models.CASCADE)  # Комплектация
-    plane = models.CharField(max_length=255, default='Global 7500')
+    count = models.IntegerField()
 
     class Meta:
-        db_table = 'planes'
+        db_table = 'configuration_map'
         unique_together = ('configuration', 'element')  # Составной первичный ключ
