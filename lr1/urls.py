@@ -4,10 +4,9 @@ from lr1_code import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-	path('', views.getStartPage, name="start"),
-	path('main/', views.getMainPage, name='main'),
-	path('detail/<int:id>/', views.getDetailPage, name='detail_url'),
-	path('configuration/<int:id>/', views.getConfigurationPage, name='configuration_url'),
-	path('delete_configuration/<int:id>/', views.deleteConfiguration, name='delete_configuration'),
-	path('add_element/<int:element_id>/', views.addConfigurationElement, name='add_element_to_configuration'),
+	path('', views.getConfigurationElementsPage, name='configuration_elements'),
+	path('plane_configuration_element/<int:id>/', views.getConfigurationElementPage, name='configuration_element'),
+	path('plane_configuration/<int:id>/', views.getConfigurationPage, name='configuration'),
+	path('delete_plane_configuration/<int:id>/', views.deleteConfiguration, name='delete_configuration'),
+	path('add_plane_configuration_element/<int:element_id>/', views.addConfigurationElement, name='add_element_to_configuration'),
 ]

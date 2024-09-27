@@ -47,7 +47,7 @@ body {
 
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: left;
 	font-size: 24px;
 	font-weight: 500;
 	position: relative; 
@@ -69,12 +69,6 @@ body {
 
 .company-name:hover {
 	color: #84684e;
-}
-
-header a.company-name {
-	position: absolute;
-	left: 50%;
-	transform: translateX(-50%);
 }
 
 
@@ -143,6 +137,13 @@ header a.company-name {
 }
 
 
+.top-container {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+}
+
+
 .configuration {
 	font-size: 24px;
 	font-weight: 700;
@@ -150,6 +151,9 @@ header a.company-name {
 	display: flex;
 	gap: 10px;
 	flex-direction: row;
+	border: #000 solid 1px;
+	border-radius: 5px;
+	margin-bottom: auto;
 }
 
 .to-configuration {
@@ -162,6 +166,7 @@ header a.company-name {
     cursor: pointer;
     background-color: transparent;
     transition: color ease 0.3s; 
+	align-items: center;
 }
 
 .to-configuration:hover {
@@ -185,17 +190,27 @@ header a.company-name {
     margin: 0;
 }
 
+.cart-img {
+    width: 32px;
+    height: 32px;
+    transition: filter 0.3s ease; /* Добавляем плавный переход */
+}
+
+.cart-img:hover {
+	filter: invert(40%) sepia(57%) saturate(269%) hue-rotate(348deg) brightness(91%) contrast(87%);
+}
+
+
 .filter-form {
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
 	align-items: center;
-	gap: 40px;
+	gap: 20px;
 }
 
 .filter {
 	width: 520px;
-	padding: 20px;
 	display: flex;
 	justify-content: space-between;
 	font-size: 16px;
@@ -357,30 +372,35 @@ header a.company-name {
 }
 
 .configuration-info {
-	display: grid;
-	gap: 15px;
-	grid-template-columns: 1fr 2fr;
-	justify-content: space-between;
-}
-
-.name-input, .phone-input, .plane-input, .id-input, .amount-input {
-	font-size: 16px;
-    padding: 10px;
-    width: 230px;
-    appearance: none;
-    border: 1px solid black;
-	border-radius: 5px;
-	background-color: white;
+    display: grid;
+    gap: 15px;
+    grid-template-columns: auto 1fr; /* Авторазмер для самой широкой подписи */
+    align-items: center; /* Вертикальное выравнивание по центру */
+	margin-bottom: 20px;
 }
 
 .configuration-info-text {
-	align-content: center;
+    text-align: left; /* Выравнивание по левой части */
+    font-weight: 600;
+    white-space: nowrap; /* Запрещаем перенос текста для hug-подхода */
 }
 
-.configuration-id-text, .configuration-amount-text {
-	align-content: center;
-	font-weight: 600;
+.name-input, .phone-input, .plane-input, .id-input, .amount-input {
+    font-size: 16px;
+    padding: 10px;
+    width: 100%; /* Поля ввода занимают всю доступную ширину */
+    appearance: none;
+    border: 1px solid black;
+    border-radius: 5px;
+    background-color: white;
 }
+
+
+
+.configuration-info > * {
+	grid-column: span 1;
+}
+
 
 .delete-btn {
 	padding: 10px;
@@ -502,19 +522,23 @@ header a.company-name {
 
 .configuration-card {
 	width: 680px;
-	height: 420px;
+	height: auto;
 	align-items: center;
 }
 
 .configuration-card-text {
-	width: 660px;
-	height: 220px;
+	width: 100%;
 	padding: 10px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .configuration-card-img {
-	margin-top: 40px;
+	margin-top: none;
 }
+
 
 /* Footer */
 

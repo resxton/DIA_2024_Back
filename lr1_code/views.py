@@ -8,7 +8,7 @@ def getStartPage(request):
     return render(request, 'start.html')
 
 
-def getMainPage(request):
+def getConfigurationElementsPage(request):
     # Получаем ID текущей заявки из сессии
     current_configuration_id = request.session.get('current_configuration_id')
     
@@ -48,7 +48,7 @@ def getMainPage(request):
     })
 
 
-def getDetailPage(request, id):
+def getConfigurationElementPage(request, id):
     try:
         item = ConfigurationElement.objects.get(id=id)
     except ConfigurationElement.DoesNotExist:
@@ -70,17 +70,17 @@ def getConfigurationPage(request, id):
         configuration = Configuration.objects.get(id=id)
     except Configuration.DoesNotExist:
         print('Конфигурация с таким id не найдена')
-        return redirect('main')
+        return redirect('configuration_elements')
 
     if configuration.status == 'deleted':
-        return redirect('main')
+        return redirect('configuration_elements')
 
     # Получаем самолеты, связанные с данной конфигурацией
     planes = Plane.objects.filter(configuration=configuration)
 
     if not planes.exists():
         print('Самолет для данной конфигурации не найден')
-        return redirect('main')
+        return redirect('configuration_elements')
 
     # Получаем элементы конфигурации по идентификаторам
     config_elements_ids = planes.values_list('element_id', flat=True)
@@ -107,7 +107,7 @@ def deleteConfiguration(request, id):
             cursor.execute("UPDATE configurations SET status = 'deleted', total_price = %s WHERE id = %s", [total_price, id])
             print(f"Конфигурация удалена. Общая сумма: {total_price}")
         
-        return redirect('main')
+        return redirect('configuration_elements')
     else:
         return Http404('Метод не поддерживается')
 
@@ -144,23 +144,24 @@ def addConfigurationElement(request, element_id):
 
     if existing_plane:
         print('Этот элемент уже добавлен в конфигурацию')
-        return redirect('main')
+        return redirect('configuration_elements')
 
     # Получаем элемент, который нужно добавить
     try:
         element = ConfigurationElement.objects.get(id=element_id)
     except ConfigurationElement.DoesNotExist:
-        return redirect('main')
+        return redirect('configuration_elements')
 
     # Добавляем элемент в таблицу Plane
     Plane.objects.create(configuration_id=configuration.id, element_id=element.id, plane='Global 7500')
 
-    return redirect('main')
+    return redirect('configuration_elements')
 
 
 def calculate_configuration_total(configuration_id):
     # Получаем все самолеты, связанные с данной конфигурацией
     planes = Plane.objects.filter(configuration_id=configuration_id)
+    
     total_sum = 0
 
     # Суммируем цены элементов конфигурации

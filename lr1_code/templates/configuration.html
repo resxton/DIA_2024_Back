@@ -9,7 +9,7 @@
 {% block header %}
 <header class="detail-header">
 	{% comment %} <a href="/main" class="back-to-main">Назад</a> {% endcomment %}
-	<a href="/main" class="company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</div></a>
+	<a href="/" class="company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</div></a>
 </header>
 {% endblock header %}
 
@@ -19,64 +19,33 @@
 	<div class="configuration-content">
 		<h1 class="configuration-title">Текущая конфигурация</h1>
 
-		{% comment %} <div class="card configuration-card">
-			<img src="http://127.0.0.1:9000/assets/plane-g7500.png" alt="g7500" class="card-img configuration-card-img">
-			<div class="card-text configuration-card-text">
-				<h1 class="card-title">Global 7500</h1>
-				<h2 class="card-key-info">19 пассажиров</h2>
-				<p class="card-category">Самолет</p>
-				<div class="card-bottom">
-					<p class="card-price">От $ 60.000.000,00</p>
-					<form method="get" action="/detail" class="detail-form">
-						<button type="submit" class="card-detail">
-							Подробнее
-						</button>
-					</form>
-				</div>
-				
-			</div>
-		</div> {% endcomment %}
-
-		{% for element in config_elements %}
-        <div class="card configuration-card">
-            <img src="{{ element.image }}" alt="{{ element.name }}" class="card-img configuration-card-img">
-            <div class="card-text configuration-card-text">
-                <h1 class="card-title">{{ element.name }}</h1>
-                <h2 class="card-key-info">{{ element.key_info }}</h2>
-				<h2 class="card-key-info">{{ plane_name }}</h2>
-                <p class="card-category">{{ element.category }}</p>
-                <div class="card-bottom">
-                    <p class="card-price">$ {{ element.price|floatformat:2 }}</p>
-                    <form method="get" action="/detail/{{ element.id }}" class="detail-form">
-                        <button type="submit" class="card-detail">
-                            Подробнее
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-
-
-
 		<div class="configuration-info">
 			<p class="configuration-info-text">Как Вас зовут?</p>
-			<input type="text" class="name-input" placeholder="ФИО" value="{{ customer_name }}">
+			<input type="text" class="name-input" placeholder="ФИО" disabled value="{{ customer_name }}">
 			<p class="configuration-info-text">Номер телефона</p>
-			<input type="text" class="phone-input" placeholder="Телефон" value="{{ customer_phone }}">
+			<input type="text" class="phone-input" placeholder="Телефон" disabled value="{{ customer_phone }}">
 			<p class="configuration-info-text">Самолет</p>
-			<input type="plane" class="plane-input" placeholder="plane_name" disabled value="{{ plane_name }}">
-			<p class="configuration-id-text">ID конфигурации</p>
-			<input type="text" class="id-input" disabled value="{{ configuration_id }}">
-			<p class="configuration-amount-text">Стоимость конфигурации</p>
+			<input type="plane" class="plane-input" placeholder="plane_name" disabled value="{{ plane }}">
+			<p class="configuration-info-text">Стоимость конфигурации</p>
 			<input type="text" class="amount-input" disabled value="$ {{ configuration_amount|floatformat:2 }}">
 		</div>
-		
-		<form action="{% url 'delete_configuration' configuration_id %}" method="post" class="delete-form">
-			{% csrf_token %}
-			<button type="submit" class="delete-btn" title="Удалить заявку">Удалить</button>
-		</form>
-		
+
+		{% for element in config_elements %}
+		<div class="card configuration-card">
+			<h1 class="card-title">{{ element.name }}</h1>
+			<img src="{{ element.image }}" alt="{{ element.name }}" class="card-img configuration-card-img">
+			<div class="card-text configuration-card-text">
+				<h2 class="card-key-info">Количество: {{ element.count }}</h2>
+				<p class="card-category">{{ element.category }}</p>
+				<p class="card-price">$ {{ element.price|floatformat:2 }}</p>
+				<form method="get" action="/plane_configuration_element/{{ element.id }}" class="detail-form">
+					<button type="submit" class="card-detail">
+						Подробнее
+					</button>
+				</form>
+			</div>
+		</div>
+		{% endfor %}
 	</div>
 </div>
 {% endblock content %}
