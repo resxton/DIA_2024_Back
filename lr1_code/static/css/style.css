@@ -71,6 +71,7 @@ body {
 	color: #84684e;
 }
 
+
 /* Detail header */
 
 .detail-header {
@@ -134,6 +135,7 @@ body {
     padding-bottom: 20px;
 	width: 1120px;
 }
+
 
 .top-container {
 	width: 100%;
@@ -400,6 +402,27 @@ body {
 }
 
 
+.delete-btn {
+	padding: 10px;
+    background-color: #000000;
+	color: white;
+    border-radius: 16px;
+    width: 200px;
+    text-align: center;
+    transition: background-color 0.3s ease; 
+	font-size: 16px;
+    font-weight: 500;
+	outline: none;
+}
+
+.delete-btn:hover {
+    background-color: #FF4C4C; /* Ярко-красный */
+}
+
+.delete-btn:active {
+    background-color: #BF0000; /* Темно-красный */
+}
+
 /* Card */
 
 .card, .configuration-card {
@@ -420,7 +443,7 @@ body {
 	align-self: auto;
 }
 
-.card-text {
+.card-text, .configuration-card-text {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
@@ -433,6 +456,10 @@ body {
 	color: #003e51;
 }
 
+.card-title {
+	padding-bottom: 10px;
+}
+
 .card-key-info {
 	font-size: 16px;
 }
@@ -441,6 +468,12 @@ body {
 	font-size: 14px;
 	font-weight: 600;
 	color: #666666;
+}
+
+.card-middle {
+	display: flex;
+	justify-content: space-between;
+	align-items: center
 }
 
 .card-bottom {
@@ -453,22 +486,33 @@ body {
 	font-weight: 700;
 }
 
-.card-detail {
+.card-detail, .add-btn {
 	color: white;
 	padding: 10px;
 	background-color: #000000;
 	border-radius: 16px;
 	font-weight: 700;
     transition: background-color 0.3s ease; 
+	width: 90px;
+	text-align: center;
+}
+
+.add-btn {
+	background-color: #003e51;
 }
 
 .card-detail:hover {
     background-color: #89674A;
 }
 
-.card-detail:active {
+.add-btn:hover {
+	background-color: #00AA00;
+}
+
+.card-detail:active, .add-btn:active {
     background-color: #DCDEDC;
 }
+
 
 .card-detail-text {
 	color: #FFFFFF
@@ -498,6 +542,7 @@ body {
 .configuration-card-img {
 	margin-top: none;
 }
+
 
 /* Footer */
 
