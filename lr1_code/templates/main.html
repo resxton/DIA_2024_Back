@@ -6,48 +6,55 @@ Nimbus
 
 {% block header %}
 <header class="global-header">
-    <a href="/main" class="company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</a>
+    <a href="/" class="company-name"><img src="http://127.0.0.1:9000/service/logo.svg" alt="Логотип" class="logo"> Nimbus</a>
 </header>
 {% endblock header %}
 
 {% block content %}
 <div class="content">
     <div class="container">
-        <div class="configuration">
-            <form method="get" action="{% url 'configuration_url' 0 %}" class="configuration-form">
-                <button type="submit" class="to-configuration">Текущая конфигурация 
-                    <div class="counter-circle">    
-                        <p class="counter">
-                            {{ configuration_counter }}
-                        </p>
-                    </div>
-                </button>
+
+        <div class="top-container">
+            <form method="get" action="{% url 'configuration_elements' %}" class="filter-form">
+                <div class="filter">
+                    <label for="categories">Категория:</label>
+                    <select name="categories" id="categories">
+                        <option value="" {% if not selected_category %}selected{% endif %}>Выберите категорию</option>
+                        <option {% if selected_category == 'Компоновка салона' %}selected{% endif %}>Компоновка салона</option>
+                        <option {% if selected_category == 'Дизайн салона' %}selected{% endif %}>Дизайн салона</option>
+                        <option {% if selected_category == 'Авионика' %}selected{% endif %}>Авионика</option>
+                        <option {% if selected_category == 'Двигатель' %}selected{% endif %}>Двигатель</option>
+                    </select>
+                </div>
+    
+                <div class="price-filter">
+                    <p class="price-filter-text">Цена от</p>
+                    <input name="price_min" type="text" class="price-input" placeholder="0" value="{{ selected_price_min }}">
+                    <p class="price-filter-text">до</p>
+                    <input name="price_max" type="text" class="price-input" placeholder="∞" value="{{ selected_price_max }}">
+                </div>
+    
+                <button type="submit" class="filter-btn">
+                    Фильтровать
+                </button> 
             </form>
+
+            <div class="configuration">
+                <form method="get" action="{% url 'configuration' 0 %}" class="configuration-form">
+                    <a href="{% url 'configuration' 0 %}" class="to-configuration">
+                        <img class="cart-img" src="http://127.0.0.1:9000/service/plane.svg" alt="">
+                        <div class="counter-circle">    
+                            <p class="counter">
+                                {{ configuration_counter }}
+                            </p>
+                        </div>
+                    </a>
+                </form>                
+            </div>
+    
         </div>
-
-        <form method="get" action="{% url 'main' %}" class="filter-form">
-            <div class="filter">
-                <label for="categories">Категория:</label>
-                <select name="categories" id="categories">
-                    <option value="" {% if not selected_category %}selected{% endif %}>Выберите категорию</option>
-                    <option {% if selected_category == 'Компоновка салона' %}selected{% endif %}>Компоновка салона</option>
-                    <option {% if selected_category == 'Дизайн салона' %}selected{% endif %}>Дизайн салона</option>
-                    <option {% if selected_category == 'Авионика' %}selected{% endif %}>Авионика</option>
-                    <option {% if selected_category == 'Двигатель' %}selected{% endif %}>Двигатель</option>
-                </select>
-            </div>
-
-            <div class="price-filter">
-                <p class="price-filter-text">Цена от</p>
-                <input name="price_min" type="text" class="price-input" placeholder="0" value="{{ selected_price_min }}">
-                <p class="price-filter-text">до</p>
-                <input name="price_max" type="text" class="price-input" placeholder="∞" value="{{ selected_price_max }}">
-            </div>
-
-            <button type="submit" class="filter-btn">
-                Фильтровать
-            </button> 
-        </form>
+        
+        
         
         <div class="card-container">
             {% for configuration_element in configuration_elements %}
@@ -59,7 +66,7 @@ Nimbus
                         <p class="card-category">{{ configuration_element.category }}</p> 
                         <div class="card-bottom">
                             <p class="card-price">$ {{ configuration_element.price|floatformat:2 }}</p>
-                            <form method="get" action="{% url 'detail_url' configuration_element.id %}" class="detail-form">
+                            <form method="get" action="{% url 'configuration_element' configuration_element.id %}" class="detail-form">
                                 <button type="submit" class="card-detail">
                                     Подробнее
                                 </button>

@@ -76,58 +76,47 @@ configuration_elements = [
     }
 ]
 
-configurations = [
-    {
-        'id': 0,
-        'configuration_amount': 86000000,
-        'customer_name': "Peter Brown",
-        'customer_phone': '+79647938863',
-        'customer_email': 'peterb@gmail.com',
-        'configuration_elements': [3]
-    }
-]
+configuration = {
+    'id': 0,
+    'configuration_amount': 86000000,
+    'customer_name': "Peter Brown",
+    'customer_phone': '+79647938863',
+    'customer_email': 'peterb@gmail.com',
+    'configuration_elements': [3]
+}
 
-plane = [
+configuration_map = [
     {
         'id': 0,
-        'plane': 'Global 7500',
+        'count': 1,
         'element_id': 3,
         'configuration_id': 0
     }
 ]
 
-
-def getStartPage(request):
-    return render(request, 'start.html')
-
-def getMainPage(request):
+def getConfigurationElementsPage(request):
     category = request.GET.get('categories', '')
     price_min = request.GET.get('price_min', '')
     price_max = request.GET.get('price_max', '')
 
     filtered_items = configuration_elements
-    
+
     if category:
         filtered_items = [item for item in filtered_items if item['category'] == category]
-    
+
     if price_min:
         filtered_items = [item for item in filtered_items if float(item['price']) >= float(price_min)]
-    
+
     if price_max:
         filtered_items = [item for item in filtered_items if float(item['price']) <= float(price_max)]
 
-    # Получение идентификатора конфигурации из таблицы plane
-    plane_id = plane[0]['configuration_id'] if plane else None
-    
+    # Получение идентификатора конфигурации из таблицы configuration_map
+    plane_id = configuration_map[0]['configuration_id'] if configuration_map else None
+
     if plane_id is not None:
-        # Найти конфигурацию по идентификатору
-        configuration = next((config for config in configurations if config['id'] == plane_id), None)
-        if configuration:
-            # Подсчет элементов конфигурации через plane
-            configuration_elements_ids = [p['element_id'] for p in plane if p['configuration_id'] == plane_id]
-            configuration_counter = len(configuration_elements_ids)
-        else:
-            configuration_counter = 0
+        # Подсчет элементов конфигурации через configuration_map
+        configuration_elements_ids = [p['element_id'] for p in configuration_map if p['configuration_id'] == plane_id]
+        configuration_counter = len(configuration_elements_ids)
     else:
         configuration_counter = 0
 
@@ -140,8 +129,7 @@ def getMainPage(request):
     })
 
 
-
-def getDetailPage(request, id):
+def getConfigurationElementPage(request, id):
     item = next((item for item in configuration_elements if item['id'] == id), None)
 
     if not item:
@@ -157,18 +145,19 @@ def getDetailPage(request, id):
         'detail_text': item['detail_text']
     })
 
-def getConfigurationPage(request, id):
-    # Поиск конфигурации по id
-    configuration = next((config for config in configurations if config['id'] == id), None)
 
-    if not configuration:
+def getConfigurationPage(request, id):
+    if id != configuration['id']:
         raise Http404('Конфигурация с таким id не найдена')
 
-    # Получение элементов конфигурации из массива configuration_elements в конфигурации
-    config_elements_ids = configuration['configuration_elements']
-
-    # Получение элементов конфигурации по идентификаторам
-    config_elements = [element for element in configuration_elements if element['id'] in config_elements_ids]
+    # Получаем элементы конфигурации с учетом количества из configuration_map
+    config_elements = []
+    for element in configuration_elements:
+        for config_map in configuration_map:
+            if config_map['element_id'] == element['id'] and config_map['configuration_id'] == id:
+                element_with_count = element.copy()
+                element_with_count['count'] = config_map['count']
+                config_elements.append(element_with_count)
 
     return render(request, 'configuration.html', {
         'configuration_id': configuration['id'],
@@ -179,7 +168,3 @@ def getConfigurationPage(request, id):
         'config_elements': config_elements,
         'plane': 'Global 7500'
     })
-
-
-
-
