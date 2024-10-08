@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.db import connection
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -9,6 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 from lr1_code.minio import *
+
 
 def user():
     try:
@@ -23,29 +25,39 @@ class ConfigurationElements(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
-    # Возвращает список элементов
+    # Возвращает список элементов с фильтрацией и добавлением id заявки-черновика
     def get(self, request, format=None):
-        configuration_elements = self.model_class.objects.all()
-        serializer = self.serializer_class(configuration_elements, many=True)
-        return Response(serializer.data)
-    
-    # Добавляет новый элемент
-    def post(self, request, format=None):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            configuration_element=serializer.save()
-            user1 = user()
-            # Назначаем создателем акции польователя user1
-            configuration_element.user = user1
-            configuration_element.save()
-            pic = request.FILES.get("pic")
-            pic_result = add_pic(configuration_element, pic)
-            # Если в результате вызова add_pic результат - ошибка, возвращаем его.
-            if 'error' in pic_result.data:    
-                return pic_result
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user_instance = user()
+        draft_configuration = Configuration.objects.filter(status='draft', creator=user_instance).first()
 
+        # Фильтруем элементы конфигурации по параметрам из запроса
+        category = request.query_params.get('category', None)
+        price_min = request.query_params.get('price_min', None)
+        price_max = request.query_params.get('price_max', None)
+
+        configuration_elements = self.model_class.objects.all()
+
+        if category:
+            configuration_elements = configuration_elements.filter(category=category)
+
+        if price_min:
+            configuration_elements = configuration_elements.filter(price__gte=float(price_min))
+
+        if price_max:
+            configuration_elements = configuration_elements.filter(price__lte=float(price_max))
+
+        serializer = self.serializer_class(configuration_elements, many=True)
+
+        # Добавляем в результат id заявки-черновика для текущего пользователя
+        response_data = {
+            "draft_configuration_id": draft_configuration.id if draft_configuration else None,
+            "configuration_elements": serializer.data
+        }
+
+        return Response(response_data)
+
+
+    
 
 class ConfigurationElement(APIView):
     model_class = ConfigurationElement
@@ -71,12 +83,45 @@ class ConfigurationElement(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-    # Удаляет информацию об элементе
+        # Удаляет информацию об элементе и связанное изображение
     def delete(self, request, pk, format=None):
         configuration_element = get_object_or_404(self.model_class, pk=pk)
+        
+        # Удаление изображения из Minio
+        if configuration_element.image:
+            image_name = configuration_element.image.split('/')[-1]
+            delete_result = delete_pic(image_name)
+            if 'error' in delete_result:
+                return Response(delete_result, status=status.HTTP_400_BAD_REQUEST)
+
+        # Удаление самого элемента
         configuration_element.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def post(self, request, pk):
+        # Проверяем, есть ли уже текущая заявка у пользователя
+        configuration = Configuration.objects.filter(creator=user(), status='draft').first()
+
+        # Если текущей заявки нет, создаем новую
+        if not configuration:
+            configuration = Configuration.objects.create(
+                status='draft',
+                creator=user(),  # Устанавливаем создателя заявки
+                created_at=timezone.now()  # Устанавливаем дату создания
+                # Другие обязательные поля можно добавить здесь
+            )
+
+        # Проверяем, есть ли уже этот элемент в заявке
+        existing_element = ConfigurationMap.objects.filter(configuration_id=configuration.id, element_id=pk).exists()
+
+        if existing_element:
+            return Response({"error": "Этот элемент уже добавлен в конфигурацию."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Добавляем элемент в таблицу ConfigurationMap
+        ConfigurationMap.objects.create(configuration_id=configuration.id, element_id=pk, count=1)
+
+        return Response({"message": "Элемент успешно добавлен в заявку."}, status=status.HTTP_201_CREATED)
+    
     
 
 # Обновляет информацию об элементе (для пользователя)    
@@ -93,6 +138,14 @@ def put(self, request, pk, format=None):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['POST'])
+def add_new_element(request, format=None):
+    serializer = ConfigurationElementSerializer(data=request.data)  # Используйте правильный сериализатор
+    if serializer.is_valid():
+        configuration_element = serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class UsersList(APIView):
     model_class = AuthUser
@@ -102,6 +155,26 @@ class UsersList(APIView):
         user = self.model_class.objects.all()
         serializer = self.serializer_class(user, many=True)
         return Response(serializer.data)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

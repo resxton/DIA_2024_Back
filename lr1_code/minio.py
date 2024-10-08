@@ -31,3 +31,17 @@ def add_pic(new_configuration_element, pic):
     new_configuration_element.save()
 
     return Response({"message": "success"})
+
+
+def delete_pic(pic):
+    client = Minio(
+        endpoint=settings.AWS_S3_ENDPOINT_URL,
+        access_key=settings.AWS_ACCESS_KEY_ID,
+        secret_key=settings.AWS_SECRET_ACCESS_KEY,
+        secure=settings.MINIO_USE_SSL
+    )
+    try:
+        client.remove_object('assets', pic)
+        return {"message": "Изображение успешно удалено"}
+    except Exception as e:
+        return {"error": f"Ошибка при удалении изображения: {str(e)}"}
