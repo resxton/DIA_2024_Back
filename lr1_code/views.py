@@ -2,7 +2,7 @@ from datetime import timezone
 from django.db import connection
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from lr1_code.models import ConfigurationElement, Configuration, ConfigurationMap, AuthUser
+from lr1_code.models import Configuration, ConfigurationElement, ConfigurationMap, AuthUser
 from lr1_code.serializers import ConfigurationElementSerializer, ConfigurationSerializer, UserSerializer
 from django.db.models import F
 from rest_framework.views import APIView
@@ -10,6 +10,7 @@ from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.response import Response
 from lr1_code.minio import *
+from django.views.decorators.csrf import csrf_exempt
 
 
 def user():
@@ -21,7 +22,7 @@ def user():
     return user1
 
 
-class ConfigurationElements(APIView):
+class ConfigurationElementsView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
@@ -58,8 +59,7 @@ class ConfigurationElements(APIView):
 
 
     
-
-class ConfigurationElement(APIView):
+class ConfigurationElementView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
@@ -125,7 +125,7 @@ class ConfigurationElement(APIView):
     
 
 # Обновляет информацию об элементе (для пользователя)    
-@api_view(['Put'])
+@api_view(['PUT'])
 def put(self, request, pk, format=None):
     configuration_element = get_object_or_404(self.model_class, pk=pk)
     serializer = self.serializer_class(configuration_element, data=request.data, partial=True)
@@ -138,14 +138,46 @@ def put(self, request, pk, format=None):
         return Response(serializer.data)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 @api_view(['POST'])
 def add_new_element(request, format=None):
-    serializer = ConfigurationElementSerializer(data=request.data)  # Используйте правильный сериализатор
+    serializer = ConfigurationElementSerializer(data=request.data)
     if serializer.is_valid():
+        # Сохраняем новый элемент конфигурации
         configuration_element = serializer.save()
+        
+        # Обработка изображения, загруженного в запросе
+        pic = request.FILES.get("pic")
+        if pic:
+            pic_result = add_pic(configuration_element, pic)
+            if 'error' in pic_result.data:
+                return Response(pic_result.data, status=status.HTTP_400_BAD_REQUEST)
+        
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ConfigurationView(APIView):
+    model_class = Configuration
+    serializer_class = ConfigurationSerializer
+
+    def get(self, request, format=None):
+        # Фильтруем конфигурации, исключая удаленные и черновые
+        configuration_elements = self.model_class.objects.exclude(status__in=['deleted', ''])
+        
+        # Получаем сериализованные данные
+        serializer = self.serializer_class(configuration_elements, many=True)
+        
+        # Сбор данных о конфигурациях с логинами создателя и модератора
+        configurations_with_users = []
+        for config in serializer.data:
+            configurations_with_users.append({
+                **config,  # Все поля из сериализованного объекта
+                "creator_username": config['creator'],  # Заменяем id логином создателя
+                "moderator_username": config['moderator'],  # Заменяем id логином модератора
+            })
+
+        return Response({"configurations": configurations_with_users}, status=status.HTTP_200_OK)
 
 class UsersList(APIView):
     model_class = AuthUser
