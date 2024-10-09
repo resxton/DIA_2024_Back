@@ -70,13 +70,18 @@ class ConfigurationElementsView(APIView):
 
         serializer = self.serializer_class(configuration_elements, many=True)
 
-        # Добавляем в результат id заявки-черновика для текущего пользователя
+        # Подсчитываем количество элементов в таблице configuration_map с configuration_id, равным draft_id
+        draft_elements_count = ConfigurationMap.objects.filter(configuration_id=draft_configuration.id).count() if draft_configuration else 0
+
+        # Добавляем в результат id заявки-черновика и количество элементов в configuration_map
         response_data = {
             "draft_configuration_id": draft_configuration.id if draft_configuration else None,
+            "draft_elements_count": draft_elements_count,
             "configuration_elements": serializer.data
         }
 
         return Response(response_data)
+
 
 
     
@@ -173,8 +178,23 @@ class ConfigurationView(APIView):
     serializer_class = ConfigurationSerializer
 
     def get(self, request, format=None):
+        # Получаем параметры фильтрации из запроса
+        status_filter = request.query_params.get('status', None)
+        created_after = request.query_params.get('created_after', None)
+        created_before = request.query_params.get('created_before', None)
+
         # Фильтруем конфигурации, исключая удаленные и черновые
         configurations = self.model_class.objects.exclude(status__in=['deleted', 'draft'])
+
+        # Применяем фильтрацию по статусу, если параметр указан
+        if status_filter:
+            configurations = configurations.filter(status=status_filter)
+
+        # Применяем фильтрацию по дате создания, если параметры указаны
+        if created_after:
+            configurations = configurations.filter(created_at__gte=created_after)
+        if created_before:
+            configurations = configurations.filter(created_at__lte=created_before)
 
         # Получаем сериализованные данные
         serializer = self.serializer_class(configurations, many=True)
@@ -193,6 +213,7 @@ class ConfigurationView(APIView):
             })
 
         return Response({"configurations": configurations_with_usernames}, status=status.HTTP_200_OK)
+
 
 
 class ConfigurationDetailView(APIView):
@@ -253,12 +274,34 @@ class ConfigurationFormingView(APIView):
     serializer_class = ConfigurationSerializer
 
     def put(self, request, pk, format=None):
-        configuration = get_object_or_404(self.model_class, pk=pk)
+        user_instance = user()
+
+        # Проверяем, является ли текущий пользователь модератором
+        if not user_instance.is_staff:
+            return Response({'error': 'Текущий пользователь не является модератором'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Получаем конфигурацию по ID
+        configuration = get_object_or_404(Configuration, pk=pk)
+
+        # Проверяем, что заявка имеет статус "Сформирована"
+        if configuration.status != 'draft':
+            return Response({'error': 'Заявка может быть сформирована только в статусе "Черновик"'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Устанавливаем новый статус заявки
         configuration.status = 'created'
-        configuration.updated_at = timezone.now()
+        configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
+        configuration.completed_at = timezone.now()  # Устанавливаем дату завершения
+
+        # Подсчитываем итоговую стоимость услуг для этой заявки
+        configuration.calculate_total_price()
+
+        # Сохраняем изменения в конфигурации
         configuration.save()
-        return Response(self.serializer_class(configuration).data, status=status.HTTP_200_OK)
-    
+
+        # Возвращаем обновленные данные конфигурации
+        serializer = ConfigurationSerializer(configuration)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class ConfigurationCompletingView(APIView):
     def put(self, request, pk, format=None):

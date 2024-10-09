@@ -41,8 +41,8 @@ class Configuration(models.Model):
         db_table = 'configurations'
 
     def calculate_total_price(self):
-        # Рассчитываем общую стоимость всех услуг для этой заявки
-        total = sum(plane.element.price for plane in self.planes.all())
+        # Рассчитываем общую стоимость всех элементов для этой заявки, учитывая количество элементов
+        total = sum(map_entry.element.price * map_entry.count for map_entry in self.configurationmap_set.all())
         self.total_price = total
         self.save()
 
