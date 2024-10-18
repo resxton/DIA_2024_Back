@@ -34,16 +34,10 @@ class ConfigurationElementsView(APIView):
         if serializer.is_valid():
             # Сохраняем новый элемент конфигурации
             configuration_element = serializer.save()
-            
-            # Обработка изображения, загруженного в запросе
-            pic = request.FILES.get("pic")
-            if pic:
-                pic_result = add_pic(configuration_element, pic)
-                if 'error' in pic_result.data:
-                    return Response(pic_result.data, status=status.HTTP_400_BAD_REQUEST)
-            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -290,7 +284,7 @@ class ConfigurationFormingView(APIView):
         # Устанавливаем новый статус заявки
         configuration.status = 'created'
         configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
-        configuration.completed_at = timezone.now()  # Устанавливаем дату завершения
+        configuration.updated_at = timezone.now()  # Устанавливаем дату изменения
 
         # Подсчитываем итоговую стоимость услуг для этой заявки
         configuration.calculate_total_price()

@@ -23,8 +23,8 @@ urlpatterns = [
 	
 	path(r'users/', views.UsersList.as_view(), name='users-list'),
 	path(r'user/<int:pk>/', views.UsersList.as_view(), name='user'),
-	path(r'users/login/', views.UserLoginView.as_view(), name='user-login'),
-	path(r'users/logout/', views.UserLogoutView.as_view(), name='user-logout'),
+	path(r'login/', views.UserLoginView.as_view(), name='user-login'),
+	path(r'logout/', views.UserLogoutView.as_view(), name='user-logout'),
 	
 	
 	

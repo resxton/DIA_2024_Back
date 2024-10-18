@@ -8,7 +8,7 @@ class ConfigurationElement(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)  # Цена услуги
     key_info = models.CharField(max_length=255)  # Основная информация (например, пассажировместимость)
     category = models.CharField(max_length=255)  # Категория услуги (например, компоновка салона)
-    image = models.URLField(default='')  # URL изображения услуги
+    image = models.URLField(default='http://localhost:9000/assets/404.png')  # URL изображения услуги
     detail_text = models.TextField(default='There is no detail text')  # Подробное описание услуги
     is_deleted = models.BooleanField(default=False)  # Статус услуги (удалена/действует)
     
@@ -27,7 +27,7 @@ class Configuration(models.Model):
     
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='draft')  # Статус заявки
     created_at = models.DateTimeField(default=timezone.now)  # Дата создания
-    updated_at = models.DateTimeField(auto_now=True)  # Дата последнего обновления
+    updated_at = models.DateTimeField(null=True, blank=True)  # Дата последнего обновления
     completed_at = models.DateTimeField(null=True, blank=True)  # Дата завершения
     customer_name = models.CharField(max_length=255)  # Имя клиента
     customer_phone = models.CharField(max_length=20)  # Телефон клиента
