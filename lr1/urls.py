@@ -1,9 +1,38 @@
+# Стандартные библиотеки Django
 from django.contrib import admin
 from django.urls import path, include
+
+# Сторонние библиотеки
+from rest_framework import routers, permissions
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+
+# Локальные модули
 from lr1_code import views
-from rest_framework import routers
+
 
 router = routers.DefaultRouter()
+
+schema_view = get_schema_view(
+   openapi.Info(
+      title="Configuration Management API",
+      default_version='v1',
+      description=(
+          "API для управления конфигурациями и услугами. "
+          "Позволяет создавать, обновлять и удалять конфигурации, "
+          "а также управлять элементами услуг, связанными с ними. "
+          "Поддерживает аутентификацию пользователей и предоставляет "
+          "интерфейс для взаимодействия с данными о клиентах и их запросами."
+      ),
+      terms_of_service="https://www.nimbus.ru/terms/",
+      contact=openapi.Contact(email="support@nimbus.ru"),
+      license=openapi.License(name="BSD License"),
+   ),
+   public=True,
+   permission_classes=(permissions.AllowAny,),
+)
+
+router.register(r'user', views.UserViewSet, basename='user')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,10 +52,14 @@ urlpatterns = [
 	
 	path(r'users/', views.UsersList.as_view(), name='users-list'),
 	path(r'user/<int:pk>/', views.UsersList.as_view(), name='user'),
-	path(r'login/', views.UserLoginView.as_view(), name='user-login'),
-	path(r'logout/', views.UserLogoutView.as_view(), name='user-logout'),
+
+ 	path('login/',  views.UserLoginView.as_view(), name='login'),
+    path('logout/', views.UserLogoutView.as_view(), name='logout'),
+
+	path(r'login', views.UserLoginView.as_view(), name='login'),
+	path(r'logout', views.UserLogoutView.as_view(), name='logout'),
 	
-	
+	path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 	
 	# path('', views.getConfigurationElementsPage, name='configuration_elements')
 	# path('plane_configuration_element/<int:id>/', views.getConfigurationElementPage, name='configuration_element'),

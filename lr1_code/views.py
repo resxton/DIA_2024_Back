@@ -1,20 +1,35 @@
-from rest_framework.response import Response
-from rest_framework import status, permissions
-from rest_framework.views import APIView
-
+# Django и сторонние библиотеки
 from datetime import timezone
-from django.utils import timezone 
+
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import connection
-from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect, render
-from lr1_code.models import Configuration, ConfigurationElement, ConfigurationMap, AuthUser
-from lr1_code.serializers import ConfigurationElementSerializer, ConfigurationSerializer, UserSerializer, ConfigurationMapSerializer
 from django.db.models import F
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework import status, permissions, viewsets
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.decorators import authentication_classes
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+import redis
 
+# Модели
+from lr1_code.models import Configuration, ConfigurationElement, ConfigurationMap, AuthUser
+
+# Сериализаторы
+from lr1_code.serializers import ConfigurationElementSerializer, ConfigurationSerializer, UserSerializer, ConfigurationMapSerializer
+
+# Утилиты
 from lr1_code.minio import *
-from django.contrib.auth import authenticate, login, logout
 
+# Connect to our Redis instance
+session_storage = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
 def user():
     try:
@@ -29,6 +44,13 @@ class ConfigurationElementsView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
+    @swagger_auto_schema(
+        request_body=ConfigurationElementSerializer,
+        responses={
+            201: openapi.Response('Created', ConfigurationElementSerializer),
+            400: openapi.Response('Bad Request'),
+        }
+    )
     def post(self, request, format=None):
         serializer = ConfigurationElementSerializer(data=request.data)
         if serializer.is_valid():
@@ -104,6 +126,7 @@ class ConfigurationElementView(APIView):
         configuration_element.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
+    @swagger_auto_schema(request_body=ConfigurationElementSerializer)
     def post(self, request, pk):
         # Проверяем, есть ли уже текущая заявка у пользователя
         configuration = Configuration.objects.filter(creator=user(), status='draft').first()
@@ -133,6 +156,13 @@ class ConfigurationElementEditingView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
+    @swagger_auto_schema(
+        request_body=ConfigurationElementSerializer,
+        responses={
+            200: openapi.Response('Success', ConfigurationElementSerializer),
+            400: openapi.Response('Bad Request'),
+        }
+    )
     # Обновляет информацию об элементе
     def put(self, request, pk, format=None):
         configuration_element = get_object_or_404(self.model_class, pk=pk)
@@ -147,6 +177,18 @@ class ConfigurationElementEditingView(APIView):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'pic': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_BINARY),
+            },
+        ),
+        responses={
+            200: openapi.Response('Success', openapi.Schema(type=openapi.TYPE_OBJECT, properties={'message': openapi.Schema(type=openapi.TYPE_STRING)})),
+            400: openapi.Response('Bad Request'),
+        }
+    )
     # Заменяет картинку, удаляя предыдущую
     def post(self, request, pk, format=None):
         configuration_element = get_object_or_404(self.model_class, pk=pk)
@@ -240,6 +282,13 @@ class ConfigurationDetailView(APIView):
             "configuration_elements": configuration_elements
         }, status=status.HTTP_200_OK)
     
+    @swagger_auto_schema(
+        request_body=ConfigurationSerializer,
+        responses={
+            200: openapi.Response('Success', ConfigurationSerializer),
+            400: openapi.Response('Bad Request'),
+        }
+    )
     def put(self, request, pk, format=None):
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class, pk=pk)
@@ -267,6 +316,7 @@ class ConfigurationFormingView(APIView):
     model_class = Configuration
     serializer_class = ConfigurationSerializer
 
+    @swagger_auto_schema(request_body=ConfigurationSerializer)
     def put(self, request, pk, format=None):
         user_instance = user()
 
@@ -298,6 +348,7 @@ class ConfigurationFormingView(APIView):
 
 
 class ConfigurationCompletingView(APIView):
+    @swagger_auto_schema(request_body=ConfigurationSerializer)
     def put(self, request, pk, format=None):
         user_instance = user()
 
@@ -333,6 +384,19 @@ class ConfigurationMapView(APIView):
     model_class = ConfigurationMap
     serializer_class = ConfigurationMapSerializer
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'configuration_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'element_id': openapi.Schema(type=openapi.TYPE_INTEGER),
+            },
+        ),
+        responses={
+            204: openapi.Response('No Content'),
+            400: openapi.Response('Bad Request'),
+        }
+    )
     def delete(self, request, format=None):
         # Извлекаем параметры из запроса
         configuration_id = request.query_params.get('configuration_id')
@@ -357,6 +421,18 @@ class ConfigurationMapView(APIView):
 
         return Response({"message": "Element removed from configuration successfully."}, status=status.HTTP_204_NO_CONTENT)
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'count': openapi.Schema(type=openapi.TYPE_INTEGER),
+            },
+        ),
+        responses={
+            200: openapi.Response('Success', ConfigurationMapSerializer),
+            400: openapi.Response('Bad Request'),
+        }
+    )
     def put(self, request, format=None):
         # Извлекаем параметры из запроса
         configuration_id = request.query_params.get('configuration_id')
@@ -394,6 +470,7 @@ class UsersList(APIView):
         serializer = self.serializer_class(user, many=True)
         return Response(serializer.data)
     
+    @swagger_auto_schema(request_body=UserSerializer)
     def post(self, request, format=None):
         # Сериализуем данные пользователя
         serializer = UserSerializer(data=request.data)
@@ -426,6 +503,7 @@ class UsersList(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @swagger_auto_schema(request_body=UserSerializer)
     def put(self, request, pk, format=None):
         # Получаем пользователя по id
         user = get_object_or_404(self.model_class, pk=pk)
@@ -445,12 +523,16 @@ class UsersList(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    
 class UserLoginView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
+        print(username, password)
         if user is not None:
             login(request, user)
             return Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
@@ -458,182 +540,42 @@ class UserLoginView(APIView):
 
 
 class UserLogoutView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
     def post(self, request, format=None):
         logout(request)
         return Response({"message": "Выход успешен."}, status=status.HTTP_200_OK)
 
 
+class UserViewSet(viewsets.ModelViewSet):
+    """
+    Класс, описывающий методы работы с пользователями.
+    Осуществляет связь с таблицей пользователей в базе данных.
+    """
+    queryset = AuthUser.objects.all()
+    serializer_class = UserSerializer
+    model_class = AuthUser
 
+    def create(self, request, *args, **kwargs):
+        """
+        Функция регистрации новых пользователей.
+        Если пользователя с указанным username ещё нет, в БД будет добавлен новый пользователь.
+        """
+        if self.model_class.objects.filter(username=request.data['username']).exists():
+            return Response({'status': 'Exist'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-
-# def getStartPage(request):
-#     return render(request, 'start.html')
-
-
-# def getConfigurationElementsPage(request):
-#     # Получаем ID текущей заявки из сессии
-#     current_configuration_id = request.session.get('current_configuration_id')
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            self.model_class.objects.create_user(
+                username=serializer.validated_data['username'],
+                password=serializer.validated_data['password'],
+                first_name=serializer.validated_data.get('first_name', ''),
+                last_name=serializer.validated_data.get('last_name', ''),
+                email=serializer.validated_data.get('email', ''),
+                is_superuser=serializer.validated_data.get('is_superuser', False),
+                is_staff=serializer.validated_data.get('is_staff', False)
+            )
+            return Response({'status': 'Success'}, status=status.HTTP_201_CREATED)
+        return Response({'status': 'Error', 'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-#     # Если ID существует, ищем заявку
-#     if current_configuration_id:
-#         current_configuration = Configuration.objects.filter(id=current_configuration_id, status='draft').first()
-#     else:
-#         current_configuration = None
-
-#     category = request.GET.get('categories', '')
-#     price_min = request.GET.get('price_min', '')
-#     price_max = request.GET.get('price_max', '')
-
-#     # Фильтруем элементы конфигурации
-#     filtered_items = ConfigurationElement.objects.all()
-
-#     if category:
-#         filtered_items = filtered_items.filter(category=category)
-
-#     if price_min:
-#         filtered_items = filtered_items.filter(price__gte=float(price_min))
-
-#     if price_max:
-#         filtered_items = filtered_items.filter(price__lte=float(price_max))
-
-#     # Получаем идентификаторы элементов, связанных с текущей конфигурацией
-#     elements = ConfigurationMap.objects.filter(configuration=current_configuration)
-#     configuration_counter = elements.count()  # Подсчитываем количество элементов в текущей заявке
-
-#     return render(request, 'main.html', {
-#         'configuration_elements': filtered_items,
-#         'configuration_counter': configuration_counter,  # Количество элементов в текущей заявке
-#         'selected_category': category,
-#         'selected_price_min': price_min,
-#         'selected_price_max': price_max,
-#         'current_configuration': current_configuration  # Передаем текущую заявку
-#     })
-
-
-# def getConfigurationElementPage(request, id):
-#     try:
-#         item = ConfigurationElement.objects.get(id=id)
-#     except ConfigurationElement.DoesNotExist:
-#         raise Http404('Элемент с таким id не найден')
-
-#     return render(request, 'detail.html', {
-#         'id': item.id,
-#         'name': item.name,
-#         'price': item.price,
-#         'key_info': item.key_info,
-#         'category': item.category,
-#         'image': item.image,
-#         'detail_text': item.detail_text
-#     })
-
-
-# def getConfigurationPage(request, id):
-#     try:
-#         configuration = Configuration.objects.get(id=id)
-#     except Configuration.DoesNotExist:
-#         print('Конфигурация с таким id не найдена')
-#         return redirect('configuration_elements')
-
-#     if configuration.status == 'deleted':
-#         return redirect('configuration_elements')
-
-#     # Получаем самолеты, связанные с данной конфигурацией
-#     elements = ConfigurationMap.objects.filter(configuration=configuration)
-
-#     if not elements.exists():
-#         print('Самолет для данной конфигурации не найден')
-#         return redirect('configuration_elements')
-
-#     # Получаем элементы конфигурации по идентификаторам и добавляем количество
-#     config_elements = ConfigurationElement.objects.filter(
-#         id__in=elements.values_list('element_id', flat=True)
-#     ).annotate(count=F('configurationmap__count'))
-
-#     return render(request, 'configuration.html', {
-#         'configuration_id': configuration.id,
-#         'customer_name': configuration.customer_name,
-#         'customer_phone': configuration.customer_phone,
-#         'customer_email': configuration.customer_email,
-#         'configuration_amount': calculate_configuration_total(configuration.id),
-#         'plane': configuration.plane,
-#         'config_elements': config_elements
-#     })
-
-
-
-# def deleteConfiguration(request, id):
-#     if request.method == 'POST':
-#         # Подсчитываем сумму конфигурации перед удалением
-#         total_price = calculate_configuration_total(id)
-        
-#         # Обновляем статус конфигурации на удаленный
-#         with connection.cursor() as cursor:
-#             cursor.execute("UPDATE configurations SET status = 'deleted', total_price = %s WHERE id = %s", [total_price, id])
-#             print(f"Конфигурация удалена. Общая сумма: {total_price}")
-        
-#         return redirect('configuration_elements')
-#     else:
-#         return Http404('Метод не поддерживается')
-
-
-
-# def addConfigurationElement(request, element_id):
-#     current_configuration_id = request.session.get('current_configuration_id')
-
-#     if not current_configuration_id:
-#         # Если заявки еще нет, создаем новую
-#         configuration = Configuration.objects.create(
-#             status='draft',
-#             customer_name='Guest',
-#             customer_phone='+123456789',
-#             customer_email='a@a.a'
-#         )
-#         request.session['current_configuration_id'] = configuration.id
-#     else:
-#         # Ищем текущую заявку
-#         configuration = Configuration.objects.filter(id=current_configuration_id, status='draft').first()
-
-#         # Если текущей заявки нет, создаем новую (на случай, если черновик был удален)
-#         if not configuration:
-#             configuration = Configuration.objects.create(
-#                 status='draft',
-#                 customer_name='Guest',
-#                 customer_phone='+123456789',
-#                 customer_email='a@a.a'
-#             )
-#             request.session['current_configuration_id'] = configuration.id
-
-#     # Проверяем, есть ли уже этот элемент в заявке
-#     existing_element = ConfigurationMap.objects.filter(configuration_id=configuration.id, element_id=element_id).exists()
-
-#     if existing_element:
-#         print('Этот элемент уже добавлен в конфигурацию')
-#         return redirect('configuration_elements')
-
-#     # Получаем элемент, который нужно добавить
-#     try:
-#         element = ConfigurationElement.objects.get(id=element_id)
-#     except ConfigurationElement.DoesNotExist:
-#         return redirect('configuration_elements')
-
-#     # Добавляем элемент в таблицу ConfigurationMap
-#     ConfigurationMap.objects.create(configuration_id=configuration.id, element_id=element.id, count=1)
-
-#     return redirect('configuration_elements')
-
-
-# def calculate_configuration_total(configuration_id):
-#     # Получаем все самолеты, связанные с данной конфигурацией
-#     elements = ConfigurationMap.objects.filter(configuration_id=configuration_id)
-    
-#     total_sum = 60000000
-
-#     # Суммируем цены элементов конфигурации
-#     for el in elements:
-#         element = ConfigurationElement.objects.get(id=el.element_id)
-#         total_sum += element.price
-
-#     return total_sum

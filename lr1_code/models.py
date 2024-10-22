@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractBaseUser, PermissionsMixin, UserManager, BaseUserManager
 from django.utils import timezone
 
 
@@ -29,13 +29,13 @@ class Configuration(models.Model):
     created_at = models.DateTimeField(default=timezone.now)  # Дата создания
     updated_at = models.DateTimeField(null=True, blank=True)  # Дата последнего обновления
     completed_at = models.DateTimeField(null=True, blank=True)  # Дата завершения
-    customer_name = models.CharField(max_length=255)  # Имя клиента
-    customer_phone = models.CharField(max_length=20)  # Телефон клиента
-    customer_email = models.CharField(max_length=255)
-    total_price = models.DecimalField(max_digits=12, decimal_places=2, default=0)  # Итоговая цена
+    customer_name = models.CharField(null=True, max_length=255)  # Имя клиента
+    customer_phone = models.CharField(null=True, max_length=20)  # Телефон клиента
+    customer_email = models.CharField(null=True, max_length=255)
+    total_price = models.DecimalField(null=True, max_digits=12, decimal_places=2, default=0)  # Итоговая цена
     creator = models.ForeignKey('AuthUser', models.DO_NOTHING, blank=True, null=True)
     moderator = models.ForeignKey('AuthUser', models.DO_NOTHING, related_name='configurations_moderator_set', blank=True, null=True)
-    plane = models.CharField(max_length=255, default='Global 7500')
+    plane = models.CharField(null=True, max_length=255, default='Global 7500')
 
     class Meta:
         db_table = 'configurations'
@@ -47,7 +47,6 @@ class Configuration(models.Model):
         self.save()
 
 
-    
 class ConfigurationMap(models.Model):
     id = models.AutoField(primary_key=True)
     configuration = models.ForeignKey(Configuration, on_delete=models.CASCADE)  # Заявка
@@ -58,22 +57,25 @@ class ConfigurationMap(models.Model):
         db_table = 'configuration_map'
         unique_together = ('configuration', 'element')  # Составной первичный ключ
 
-
-class AuthUser(models.Model):
-    password = models.CharField(max_length=128)
-    last_login = models.DateTimeField(blank=True, null=True)
-    is_superuser = models.BooleanField(default=False)
+class AuthUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(unique=True, max_length=150)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
-    email = models.CharField(max_length=254)
-    is_staff = models.BooleanField()
-    is_active = models.BooleanField()
-    date_joined = models.DateTimeField()
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    email = models.EmailField(max_length=254, blank=True)
+    is_superuser = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False, verbose_name="Is staff?")
+    is_active = models.BooleanField(default=True, verbose_name="Is active?")
+    date_joined = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(blank=True, null=True)
+
+    USERNAME_FIELD = 'username'
+
+    objects = UserManager()
+
+    class Meta:
+        db_table = 'custom_user'  # Уникальное имя таблицы
+        verbose_name = 'User'
+        verbose_name_plural = 'Users'
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user'
