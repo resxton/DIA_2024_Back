@@ -45,10 +45,10 @@ def user():
     return user1
 
 class ConfigurationElementsView(APIView):
-    permission_classes = [IsAdmin | IsManager]
 
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         request_body=ConfigurationElementSerializer,
@@ -59,6 +59,10 @@ class ConfigurationElementsView(APIView):
         }
     )
     def post(self, request, format=None):
+        if request.user.is_superuser or request.user.is_staff:
+            pass
+        else:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         serializer = ConfigurationElementSerializer(data=request.data)
         if serializer.is_valid():
             # Сохраняем новый элемент конфигурации
@@ -70,12 +74,13 @@ class ConfigurationElementsView(APIView):
     @swagger_auto_schema(
         operation_summary="Получить список элементов с фильтрацией и добавлением id заявки-черновика"
     )
-    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     # Возвращает список элементов с фильтрацией и добавлением id заявки-черновика
     def get(self, request, format=None):
-        user_instance = user()
-        draft_configuration = Configuration.objects.filter(status='draft', creator=user_instance).first()
-
+        if request.user:
+            draft_configuration = Configuration.objects.filter(status='draft', creator=request.user).first()
+        else:
+            draft_configuration = None
+            
         # Фильтруем элементы конфигурации по параметрам из запроса
         category = request.query_params.get('category', None)
         price_min = request.query_params.get('price_min', None)
