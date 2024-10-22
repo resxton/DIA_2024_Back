@@ -1,4 +1,5 @@
 # Django и сторонние библиотеки
+from argparse import Action
 from datetime import timezone
 import uuid
 
@@ -13,11 +14,12 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, SAFE_METHODS, IsAuthenticatedOrReadOnly
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.decorators import authentication_classes
+from rest_framework.decorators import authentication_classes, action
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
+from drf_yasg.inspectors import SwaggerAutoSchema
 import redis
 
 # Модели
@@ -42,15 +44,15 @@ def user():
         user1.save()
     return user1
 
-
 class ConfigurationElementsView(APIView):
-    permission_classes = [IsAdmin]
+    permission_classes = [IsAdmin | IsManager]
 
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
     @swagger_auto_schema(
         request_body=ConfigurationElementSerializer,
+        operation_summary="Создать новый элемент конфигурации",
         responses={
             201: openapi.Response('Created', ConfigurationElementSerializer),
             400: openapi.Response('Bad Request'),
@@ -65,9 +67,10 @@ class ConfigurationElementsView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
+    @swagger_auto_schema(
+        operation_summary="Получить список элементов с фильтрацией и добавлением id заявки-черновика"
+    )
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     # Возвращает список элементов с фильтрацией и добавлением id заявки-черновика
     def get(self, request, format=None):
         user_instance = user()
@@ -110,14 +113,27 @@ class ConfigurationElementView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
+    @swagger_auto_schema(
+        operation_summary="Получить информацию об элементе конфигурации по его идентификатору"
+    )
     # Возвращает информацию об элементе
     def get(self, request, pk, format=None):
         configuration_element = get_object_or_404(self.model_class, pk=pk)
         serializer = self.serializer_class(configuration_element)
         return Response(serializer.data)
 
-        # Удаляет информацию об элементе и связанное изображение
+    @swagger_auto_schema(
+        operation_summary="Удалить элемент конфигурации и связанное с ним изображение"
+    )
+    # Удаляет информацию об элементе и связанное изображение
     def delete(self, request, pk, format=None):
+        if request.user.is_superuser or request.user.is_staff:
+            # Администраторы и менеджеры могут видеть все конфигурации
+            pass
+        else:
+            # Если пользователь не создатель конфигурации, возвращаем 403
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        
         configuration_element = get_object_or_404(self.model_class, pk=pk)
         
         # Удаление изображения из Minio
@@ -131,16 +147,19 @@ class ConfigurationElementView(APIView):
         configuration_element.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-    @swagger_auto_schema(request_body=ConfigurationElementSerializer)
+    @swagger_auto_schema(
+        request_body=ConfigurationElementSerializer,
+        operation_summary="Добавить элемент в заявку-черновик пользователя"
+    )
     def post(self, request, pk):
         # Проверяем, есть ли уже текущая заявка у пользователя
-        configuration = Configuration.objects.filter(creator=user(), status='draft').first()
+        configuration = Configuration.objects.filter(creator=request.user, status='draft').first()
 
         # Если текущей заявки нет, создаем новую
         if not configuration:
             configuration = Configuration.objects.create(
                 status='draft',
-                creator=user(),  # Устанавливаем создателя заявки
+                creator=request.user,  # Устанавливаем создателя заявки
                 created_at=timezone.now()  # Устанавливаем дату создания
                 # Другие обязательные поля можно добавить здесь
             )
@@ -157,12 +176,16 @@ class ConfigurationElementView(APIView):
         return Response({"message": "Элемент успешно добавлен в заявку."}, status=status.HTTP_201_CREATED)
 
 
+
 class ConfigurationElementEditingView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
+    permission_classes = [IsAdmin | IsManager]
+
     @swagger_auto_schema(
         request_body=ConfigurationElementSerializer,
+        operation_summary="Обновить информацию об элементе конфигурации",
         responses={
             200: openapi.Response('Success', ConfigurationElementSerializer),
             400: openapi.Response('Bad Request'),
@@ -192,7 +215,8 @@ class ConfigurationElementEditingView(APIView):
         responses={
             200: openapi.Response('Success', openapi.Schema(type=openapi.TYPE_OBJECT, properties={'message': openapi.Schema(type=openapi.TYPE_STRING)})),
             400: openapi.Response('Bad Request'),
-        }
+        },
+        operation_summary="Заменить изображение элемента конфигурации, удалив предыдущее"
     )
     # Заменяет картинку, удаляя предыдущую
     def post(self, request, pk, format=None):
@@ -218,14 +242,25 @@ class ConfigurationView(APIView):
     model_class = Configuration
     serializer_class = ConfigurationSerializer
 
+    @swagger_auto_schema(
+        operation_summary="Получить список конфигураций с возможностью фильтрации по статусу и дате создания"
+    )
     def get(self, request, format=None):
+        if request.user.is_authenticated:
+            # Если пользователь аутентифицирован, проверяем его роль
+            if request.user.is_superuser or request.user.is_staff:  # Для администраторов
+                configurations = self.model_class.objects.exclude(status__in=['deleted', 'draft'])
+            else:
+                # Для создателей возвращаем только их заявки
+                configurations = self.model_class.objects.filter(creator=request.user).exclude(status__in=['deleted', 'draft'])
+        else:
+            # Если пользователь не аутентифицирован, возвращаем 401/403
+            return Response({'detail': 'Authentication credentials were not provided.'}, status=status.HTTP_401_UNAUTHORIZED)
+
         # Получаем параметры фильтрации из запроса
         status_filter = request.query_params.get('status', None)
         created_after = request.query_params.get('created_after', None)
         created_before = request.query_params.get('created_before', None)
-
-        # Фильтруем конфигурации, исключая удаленные и черновые
-        configurations = self.model_class.objects.exclude(status__in=['deleted', 'draft'])
 
         # Применяем фильтрацию по статусу, если параметр указан
         if status_filter:
@@ -242,15 +277,13 @@ class ConfigurationView(APIView):
         configurations_with_usernames = []
 
         for config in serializer.data:
-            # Получаем логины создателя и модератора по их id
             creator_username = AuthUser.objects.get(id=config['creator']).username if config['creator'] else None
             moderator_username = AuthUser.objects.get(id=config['moderator']).username if config['moderator'] else None
 
-            # Объединяем все поля конфигурации с заменой id на логины
             configurations_with_usernames.append({
-                **config,  # Все поля из сериализованного объекта
-                "creator": creator_username,  # Заменяем id на логин создателя
-                "moderator": moderator_username  # Заменяем id на логин модератора
+                **config,
+                "creator": creator_username,
+                "moderator": moderator_username
             })
 
         return Response({"configurations": configurations_with_usernames}, status=status.HTTP_200_OK)
@@ -260,10 +293,22 @@ class ConfigurationView(APIView):
 class ConfigurationDetailView(APIView):
     model_class = Configuration
     serializer_class = ConfigurationSerializer
+    permission_classes = [IsManager | IsAdmin]
 
+    @swagger_auto_schema(
+        operation_summary="Получить конфигурацию по идентификатору с её элементами и изображениями"
+    )
     def get(self, request, pk, format=None):
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class.objects.prefetch_related('configurationmap_set__element'), pk=pk)
+
+        # Проверяем, имеет ли пользователь право доступа к данной конфигурации
+        if request.user.is_superuser or request.user.is_staff:
+            # Администраторы и менеджеры могут видеть все конфигурации
+            pass
+        elif configuration.creator != request.user:
+            # Если пользователь не создатель конфигурации, возвращаем 403
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Сериализуем конфигурацию
         serializer = self.serializer_class(configuration)
@@ -271,14 +316,14 @@ class ConfigurationDetailView(APIView):
         # Получаем услуги и их изображения
         configuration_elements = [
             {
-                "service_name": map.element.name,  # Получаем название услуги из модели ConfigurationElement
-                "image": map.element.image,  # Получаем изображение услуги
-                "price": map.element.price,  # Можно добавить и другие поля, если нужно
-                "key_info": map.element.key_info,  # Основная информация
-                "category": map.element.category,  # Категория услуги
-                "detail_text": map.element.detail_text,  # Подробное описание услуги
+                "service_name": map.element.name,
+                "image": map.element.image,
+                "price": map.element.price,
+                "key_info": map.element.key_info,
+                "category": map.element.category,
+                "detail_text": map.element.detail_text,
             }
-            for map in configuration.configurationmap_set.all()  # Используем связь через ConfigurationMap
+            for map in configuration.configurationmap_set.all()
         ]
 
         # Возвращаем данные с конфигурацией и списком услуг
@@ -292,9 +337,15 @@ class ConfigurationDetailView(APIView):
         responses={
             200: openapi.Response('Success', ConfigurationSerializer),
             400: openapi.Response('Bad Request'),
-        }
+        },
+        operation_summary="Обновить конфигурацию по идентификатору"
     )
     def put(self, request, pk, format=None):
+        if request.user.is_superuser or request.user.is_staff:
+            pass
+        else:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class, pk=pk)
         
@@ -306,7 +357,14 @@ class ConfigurationDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Если есть ошибки валидации
 
+    @swagger_auto_schema(
+        operation_summary="Удалить конфигурацию, обновив её статус на 'deleted'"
+    )
     def delete(self, request, pk, format=None):
+        if request.user.is_superuser or request.user.is_staff:
+            pass
+        else:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class, pk=pk)
 
@@ -321,16 +379,28 @@ class ConfigurationFormingView(APIView):
     model_class = Configuration
     serializer_class = ConfigurationSerializer
 
-    @swagger_auto_schema(request_body=ConfigurationSerializer)
+    @swagger_auto_schema(
+        request_body=ConfigurationSerializer,
+        operation_summary="Сформировать заявку, обновив её статус на 'Сформирована'"
+    )
     def put(self, request, pk, format=None):
-        user_instance = user()
+        username = check_session(request)
+        print(username)
+        # Здесь нужно получить пользователя по username
+        user = get_object_or_404(AuthUser, username=username)
+        request.user = user  # Устанавливаем пользователя в request
 
-        # Проверяем, является ли текущий пользователь модератором
-        if not user_instance.is_staff:
-            return Response({'error': 'Текущий пользователь не является модератором'}, status=status.HTTP_403_FORBIDDEN)
-
+        # Далее стандартная логика
         # Получаем конфигурацию по ID
         configuration = get_object_or_404(Configuration, pk=pk)
+
+        if request.user.is_superuser or request.user.is_staff:
+            pass
+        elif configuration.creator != request.user:
+            # Если пользователь не создатель конфигурации, возвращаем 403
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            pass
 
         # Проверяем, что заявка имеет статус "Сформирована"
         if configuration.status != 'draft':
@@ -338,7 +408,7 @@ class ConfigurationFormingView(APIView):
 
         # Устанавливаем новый статус заявки
         configuration.status = 'created'
-        configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
+        configuration.moderator = request.user  # Устанавливаем текущего пользователя как модератора
         configuration.updated_at = timezone.now()  # Устанавливаем дату изменения
 
         # Подсчитываем итоговую стоимость услуг для этой заявки
@@ -353,14 +423,13 @@ class ConfigurationFormingView(APIView):
 
 
 class ConfigurationCompletingView(APIView):
-    @swagger_auto_schema(request_body=ConfigurationSerializer)
+    permission_classes = [IsAdmin | IsManager]
+    
+    @swagger_auto_schema(
+        request_body=ConfigurationSerializer,
+        operation_summary="Завершить или отклонить заявку, обновив её статус"
+    )
     def put(self, request, pk, format=None):
-        user_instance = user()
-
-        # Проверяем, является ли текущий пользователь модератором
-        if not user_instance.is_staff:
-            return Response({'error': 'Текущий пользователь не является модератором'}, status=status.HTTP_403_FORBIDDEN)
-
         # Получаем конфигурацию по ID
         configuration = get_object_or_404(Configuration, pk=pk)
 
@@ -375,7 +444,7 @@ class ConfigurationCompletingView(APIView):
 
         # Устанавливаем новый статус заявки
         configuration.status = new_status
-        configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
+        configuration.moderator = request.user  # Устанавливаем текущего пользователя как модератора
         configuration.completed_at = timezone.now()  # Устанавливаем дату завершения
 
         # Сохраняем изменения в конфигурации
@@ -388,6 +457,7 @@ class ConfigurationCompletingView(APIView):
 class ConfigurationMapView(APIView):
     model_class = ConfigurationMap
     serializer_class = ConfigurationMapSerializer
+    permission_classes = [IsManager | IsAdmin]
 
     @swagger_auto_schema(
         request_body=openapi.Schema(
@@ -400,7 +470,8 @@ class ConfigurationMapView(APIView):
         responses={
             204: openapi.Response('No Content'),
             400: openapi.Response('Bad Request'),
-        }
+        },
+        operation_summary="Удалить элемент из конфигурации по идентификаторам"
     )
     def delete(self, request, format=None):
         # Извлекаем параметры из запроса
@@ -436,7 +507,8 @@ class ConfigurationMapView(APIView):
         responses={
             200: openapi.Response('Success', ConfigurationMapSerializer),
             400: openapi.Response('Bad Request'),
-        }
+        },
+        operation_summary="Обновить количество элемента в конфигурации"
     )
     def put(self, request, format=None):
         # Извлекаем параметры из запроса
@@ -470,13 +542,27 @@ class UsersList(APIView):
     model_class = AuthUser
     serializer_class = UserSerializer
 
+    @swagger_auto_schema(
+        operation_summary="Получить список всех пользователей"
+    )
     def get(self, request, format=None):
-        user = self.model_class.objects.all()
+        if request.user.is_superuser:
+            pass
+        else:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        user = self.objects.all()
         serializer = self.serializer_class(user, many=True)
         return Response(serializer.data)
     
-    @swagger_auto_schema(request_body=UserSerializer)
+    @swagger_auto_schema(
+        request_body=UserSerializer,
+        operation_summary="Создать нового пользователя"
+    )
     def post(self, request, format=None):
+        if request.user.is_superuser:
+            pass
+        else:
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
         # Сериализуем данные пользователя
         serializer = UserSerializer(data=request.data)
 
@@ -508,10 +594,19 @@ class UsersList(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(request_body=UserSerializer)
+    @swagger_auto_schema(
+        request_body=UserSerializer,
+        operation_summary="Обновить информацию о пользователе"
+    )
     def put(self, request, pk, format=None):
         # Получаем пользователя по id
         user = get_object_or_404(self.model_class, pk=pk)
+
+        if request.user.is_superuser or request.user == user:
+            pass
+        else:
+            # Если пользователь не создатель конфигурации, возвращаем 403
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Сериализуем данные с обновлением
         serializer = self.serializer_class(user, data=request.data, partial=True)
@@ -533,6 +628,20 @@ class UserLoginView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            200: openapi.Response('Вход успешен.'),
+            401: openapi.Response('Неверные данные.'),
+        },
+        operation_summary="Войти в систему"
+    )
     def post(self, request, format=None):
         username = request.data.get('username')
         password = request.data.get('password')
@@ -542,6 +651,9 @@ class UserLoginView(APIView):
             random_key = str(uuid.uuid4())
             session_storage.set(random_key, username)
 
+            response = HttpResponse("{'status': 'ok'}")
+            response.set_cookie("session_id", random_key)
+
             login(request, user)
             return Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
         return Response({"error": "Неверные данные."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -549,8 +661,13 @@ class UserLoginView(APIView):
 
 class UserLogoutView(APIView):
     authentication_classes = []
-    permission_classes = [AllowAny]
 
+    @swagger_auto_schema(
+        responses={
+            200: openapi.Response('Выход успешен.'),
+        },
+        operation_summary="Выйти из системы"
+    )
     def post(self, request, format=None):
         logout(request)
         return Response({"message": "Выход успешен."}, status=status.HTTP_200_OK)
@@ -604,3 +721,15 @@ def method_permission_classes(classes):
             return func(self, *args, **kwargs)
         return decorated_func
     return decorator
+
+def check_session(request):
+    session_id = request.COOKIES.get("sessionid")
+    print(session_id)
+    if session_id is None:
+        return None  # Сессия не найдена
+
+    username = session_storage.get(session_id)
+    if username is None:
+        return None  # Сессия невалидна или истекла
+
+    return username

@@ -26,7 +26,7 @@ schema_view = get_schema_view(
       ),
       terms_of_service="https://www.nimbus.ru/terms/",
       contact=openapi.Contact(email="support@nimbus.ru"),
-      license=openapi.License(name="BSD License"),
+      license=openapi.License(name="BSD License")
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),
@@ -51,13 +51,10 @@ urlpatterns = [
 	path(r'configuration_map/', views.ConfigurationMapView.as_view(), name="map"),
 	
 	path(r'users/', views.UsersList.as_view(), name='users-list'),
-	path(r'user/<int:pk>/', views.UsersList.as_view(), name='user'),
+	path(r'users/<int:pk>/', views.UsersList.as_view(), name='user'),
 
  	path('login/',  views.UserLoginView.as_view(), name='login'),
     path('logout/', views.UserLogoutView.as_view(), name='logout'),
-
-	path(r'login', views.UserLoginView.as_view(), name='login'),
-	path(r'logout', views.UserLogoutView.as_view(), name='logout'),
 	
 	path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 	

@@ -31,10 +31,12 @@ class ConfigurationSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     is_staff = serializers.BooleanField(default=False, required=False)
     is_superuser = serializers.BooleanField(default=False, required=False)
-
+    password = serializers.CharField(default=None, required=False)
+    username = serializers.CharField(default=None, required=False)
+    
     class Meta:
         model = AuthUser
-        fields = '__all__'  # Это будет включать все поля вашей модели
+        fields = '__all__'  
 
     def create(self, validated_data):
         # Создаем пользователя и устанавливаем пароль
