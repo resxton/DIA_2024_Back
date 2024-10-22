@@ -108,8 +108,10 @@ services:
     
   redis:
     image: redis:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
     ports:
-      - "6379:6379"
+      - 6379:6379
     restart: always
 
 
@@ -126,3 +128,4 @@ volumes:
   data4-2:
   postgres:
   pgadmin:
+  redis:

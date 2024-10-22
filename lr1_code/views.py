@@ -1,5 +1,6 @@
 # Django и сторонние библиотеки
 from datetime import timezone
+import uuid
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import make_password
@@ -12,7 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status, permissions, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.decorators import authentication_classes
 from drf_yasg.utils import swagger_auto_schema
@@ -23,10 +24,12 @@ import redis
 from lr1_code.models import Configuration, ConfigurationElement, ConfigurationMap, AuthUser
 
 # Сериализаторы
+from lr1_code.permissions import IsAdmin
 from lr1_code.serializers import ConfigurationElementSerializer, ConfigurationSerializer, UserSerializer, ConfigurationMapSerializer
 
 # Утилиты
 from lr1_code.minio import *
+from lr1_code.permissions import *
 
 # Connect to our Redis instance
 session_storage = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
@@ -41,6 +44,8 @@ def user():
 
 
 class ConfigurationElementsView(APIView):
+    permission_classes = [IsAdmin]
+
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
 
@@ -534,6 +539,9 @@ class UserLoginView(APIView):
         user = authenticate(username=username, password=password)
         print(username, password)
         if user is not None:
+            random_key = str(uuid.uuid4())
+            session_storage.set(random_key, username)
+
             login(request, user)
             return Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
         return Response({"error": "Неверные данные."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -557,6 +565,15 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     model_class = AuthUser
 
+    def get_permissions(self):
+        if self.action in ['create']:
+            permission_classes = [AllowAny]
+        elif self.action in ['list']:
+            permission_classes = [IsAdmin | IsManager]
+        else:
+            permission_classes = [IsAdmin]
+        return [permission() for permission in permission_classes]
+
     def create(self, request, *args, **kwargs):
         """
         Функция регистрации новых пользователей.
@@ -579,3 +596,11 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Success'}, status=status.HTTP_201_CREATED)
         return Response({'status': 'Error', 'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
+def method_permission_classes(classes):
+    def decorator(func):
+        def decorated_func(self, *args, **kwargs):
+            self.permission_classes = classes        
+            self.check_permissions(self.request)
+            return func(self, *args, **kwargs)
+        return decorated_func
+    return decorator
