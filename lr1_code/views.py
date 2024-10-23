@@ -45,7 +45,6 @@ def user():
     return user1
 
 class ConfigurationElementsView(APIView):
-
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
     permission_classes = [AllowAny]
@@ -80,7 +79,7 @@ class ConfigurationElementsView(APIView):
             draft_configuration = Configuration.objects.filter(status='draft', creator=request.user).first()
         else:
             draft_configuration = None
-            
+
         # Фильтруем элементы конфигурации по параметрам из запроса
         category = request.query_params.get('category', None)
         price_min = request.query_params.get('price_min', None)
@@ -298,7 +297,7 @@ class ConfigurationView(APIView):
 class ConfigurationDetailView(APIView):
     model_class = Configuration
     serializer_class = ConfigurationSerializer
-    permission_classes = [IsManager | IsAdmin]
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     @swagger_auto_schema(
         operation_summary="Получить конфигурацию по идентификатору с её элементами и изображениями"
@@ -307,13 +306,28 @@ class ConfigurationDetailView(APIView):
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class.objects.prefetch_related('configurationmap_set__element'), pk=pk)
 
-        # Проверяем, имеет ли пользователь право доступа к данной конфигурации
-        if request.user.is_superuser or request.user.is_staff:
-            # Администраторы и менеджеры могут видеть все конфигурации
-            pass
-        elif configuration.creator != request.user:
-            # Если пользователь не создатель конфигурации, возвращаем 403
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        ssid = request.COOKIES["sessionid"]
+        if ssid is not None:
+            user_id = session_storage.get(ssid)
+            print(user_id)
+            user_instance = AuthUser.objects.filter(pk=user_id).first()
+            if user_instance is not None:
+                if user_instance.is_superuser or user_instance.is_staff:
+                    pass
+                elif configuration.creator != request.user:
+                    return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                print("No user with pk =", user_id)
+                return Response({"error": "No such user"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            
+        # # Проверяем, имеет ли пользователь право доступа к данной конфигурации
+        # if request.user.is_superuser or request.user.is_staff:
+        #     # Администраторы и менеджеры могут видеть все конфигурации
+        #     pass
+        # elif configuration.creator != request.user:
+        #     # Если пользователь не создатель конфигурации, возвращаем 403
+        #     return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Сериализуем конфигурацию
         serializer = self.serializer_class(configuration)
@@ -654,10 +668,12 @@ class UserLoginView(APIView):
         print(username, password)
         if user is not None:
             random_key = str(uuid.uuid4())
-            session_storage.set(random_key, username)
+            session_storage.set(random_key, user.pk)
+            print(random_key, user.pk)
 
             response = HttpResponse("{'status': 'ok'}")
-            response.set_cookie("session_id", random_key)
+            response.set_cookie("sessionid", random_key)
+            print(random_key)
 
             login(request, user)
             return Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
