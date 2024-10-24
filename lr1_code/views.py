@@ -689,9 +689,15 @@ class UserLogoutView(APIView):
         },
         operation_summary="Выйти из системы"
     )
-    def post(self, request, format=None):
-        logout(request)
-        return Response({"message": "Выход успешен."}, status=status.HTTP_200_OK)
+    def post(self, request):
+        session_id = request.COOKIES.get('session_id')
+        if session_id:
+            session_storage.delete(session_id)  # Удалите из вашего хранилища
+            response = Response({"message": "Вы вышли из системы."}, status=status.HTTP_200_OK)
+            response.delete_cookie("session_id")  # Удалите куку
+            return response
+        return Response({"error": "Необходима аутентификация."}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
