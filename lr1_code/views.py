@@ -75,10 +75,9 @@ class ConfigurationElementsView(APIView):
     )
     # Возвращает список элементов с фильтрацией и добавлением id заявки-черновика
     def get(self, request, format=None):
-        if request.user:
+        draft_configuration = None
+        if request.user.is_authenticated:
             draft_configuration = Configuration.objects.filter(status='draft', creator=request.user).first()
-        else:
-            draft_configuration = None
 
         # Фильтруем элементы конфигурации по параметрам из запроса
         category = request.query_params.get('category', None)
@@ -109,8 +108,6 @@ class ConfigurationElementsView(APIView):
         }
 
         return Response(response_data)
-
-
 
     
 class ConfigurationElementView(APIView):
@@ -360,30 +357,56 @@ class ConfigurationDetailView(APIView):
         operation_summary="Обновить конфигурацию по идентификатору"
     )
     def put(self, request, pk, format=None):
-        if request.user.is_superuser or request.user.is_staff:
-            pass
+        # Проверяем сессионные данные
+        ssid = request.COOKIES.get("sessionid")
+        if ssid is not None:
+            user_id = session_storage.get(ssid)
+            print(user_id)
+            user_instance = AuthUser.objects.filter(pk=user_id).first()
+            if user_instance is not None:
+                if user_instance.is_superuser or user_instance.is_staff:
+                    pass
+                else:
+                    return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                print("No user with pk =", user_id)
+                return Response({"error": "No such user"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class, pk=pk)
-        
+
         # Обновляем поля конфигурации
         serializer = self.serializer_class(configuration, data=request.data, partial=True)  # partial=True для частичного обновления
-        
+
         if serializer.is_valid():
             serializer.save()  # Сохраняем изменения
             return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Если есть ошибки валидации
 
+
     @swagger_auto_schema(
         operation_summary="Удалить конфигурацию, обновив её статус на 'deleted'"
     )
     def delete(self, request, pk, format=None):
-        if request.user.is_superuser or request.user.is_staff:
-            pass
+        # Проверяем сессионные данные
+        ssid = request.COOKIES.get("sessionid")
+        if ssid is not None:
+            user_id = session_storage.get(ssid)
+            print(user_id)
+            user_instance = AuthUser.objects.filter(pk=user_id).first()
+            if user_instance is not None:
+                if user_instance.is_superuser or user_instance.is_staff:
+                    pass
+                else:
+                    return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                print("No user with pk =", user_id)
+                return Response({"error": "No such user"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+
         # Получаем конфигурацию по id
         configuration = get_object_or_404(self.model_class, pk=pk)
 

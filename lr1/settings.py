@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'drf_yasg',
+	'corsheaders',
 	
      # DRF
     'rest_framework',
@@ -59,6 +60,7 @@ REST_FRAMEWORK = {
 AUTH_USER_MODEL = 'lr1_code.AuthUser'
 
 MIDDLEWARE = [
+	'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -66,6 +68,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+	'http://127.0.0.1:3000',
+	"http://192.168.31.8:3000"
 ]
 
 ROOT_URLCONF = 'lr1.urls'

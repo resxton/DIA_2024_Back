@@ -31,7 +31,7 @@ class ConfigurationElement(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)  # Цена услуги
     key_info = models.CharField(max_length=255)  # Основная информация (например, пассажировместимость)
     category = models.CharField(max_length=255)  # Категория услуги (например, компоновка салона)
-    image = models.URLField(default='http://localhost:9000/assets/404.png')  # URL изображения услуги
+    image = models.URLField(null=True)  # URL изображения услуги
     detail_text = models.TextField(default='There is no detail text')  # Подробное описание услуги
     is_deleted = models.BooleanField(default=False)  # Статус услуги (удалена/действует)
     
