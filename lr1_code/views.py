@@ -58,6 +58,21 @@ class ConfigurationElementsView(APIView):
         }
     )
     def post(self, request, format=None):
+        ssid = request.COOKIES["sessionid"]
+        print(ssid)
+        if ssid is not None:
+            user_id = session_storage.get(ssid)
+            print(user_id)
+            user_instance = AuthUser.objects.filter(pk=user_id).first()
+            if user_instance is not None:
+                if user_instance.is_superuser or user_instance.is_staff:
+                    pass
+                else:
+                    return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            else:
+                print("No user with pk =", user_id)
+                return Response({"error": "No such user"}, status=status.HTTP_400_BAD_REQUEST)
+
         if request.user.is_superuser or request.user.is_staff:
             pass
         else:
@@ -297,34 +312,32 @@ class ConfigurationDetailView(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     @swagger_auto_schema(
-        operation_summary="Получить конфигурацию по идентификатору с её элементами и изображениями"
-    )
+    operation_summary="Получить конфигурацию по идентификатору с её элементами и изображениями"
+)
     def get(self, request, pk, format=None):
         # Получаем конфигурацию по id
-        configuration = get_object_or_404(self.model_class.objects.prefetch_related('configurationmap_set__element'), pk=pk)
+        configuration = get_object_or_404(
+            self.model_class.objects.prefetch_related('configurationmap_set__element'), pk=pk
+        )
 
-        ssid = request.COOKIES["sessionid"]
-        if ssid is not None:
-            user_id = session_storage.get(ssid)
-            print(user_id)
-            user_instance = AuthUser.objects.filter(pk=user_id).first()
-            if user_instance is not None:
-                if user_instance.is_superuser or user_instance.is_staff:
-                    pass
-                elif configuration.creator != request.user:
-                    return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-            else:
-                print("No user with pk =", user_id)
-                return Response({"error": "No such user"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            
-        # # Проверяем, имеет ли пользователь право доступа к данной конфигурации
-        # if request.user.is_superuser or request.user.is_staff:
-        #     # Администраторы и менеджеры могут видеть все конфигурации
-        #     pass
-        # elif configuration.creator != request.user:
-        #     # Если пользователь не создатель конфигурации, возвращаем 403
-        #     return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        # Безопасно получаем session_id из cookies
+        ssid = request.COOKIES.get("session_id")
+        if not ssid:
+            return Response({"error": "Необходима аутентификация."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Проверяем сессию в хранилище
+        user_id = session_storage.get(ssid)
+        if not user_id:
+            return Response({"error": "Сессия недействительна."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Проверяем существование пользователя
+        user_instance = AuthUser.objects.filter(pk=user_id).first()
+        if not user_instance:
+            return Response({"error": "Пользователь не найден."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Проверяем права доступа
+        if not (user_instance.is_superuser or user_instance.is_staff or configuration.creator == user_instance):
+            return Response({'detail': 'Доступ запрещен.'}, status=status.HTTP_403_FORBIDDEN)
 
         # Сериализуем конфигурацию
         serializer = self.serializer_class(configuration)
@@ -333,7 +346,7 @@ class ConfigurationDetailView(APIView):
         configuration_elements = [
             {
                 "service_name": map.element.name,
-                "image": map.element.image,
+                "image": map.element.image.url if map.element.image else None,
                 "price": map.element.price,
                 "key_info": map.element.key_info,
                 "category": map.element.category,
@@ -347,6 +360,7 @@ class ConfigurationDetailView(APIView):
             "configuration": serializer.data,
             "configuration_elements": configuration_elements
         }, status=status.HTTP_200_OK)
+
     
     @swagger_auto_schema(
         request_body=ConfigurationSerializer,
@@ -694,17 +708,19 @@ class UserLoginView(APIView):
             session_storage.set(random_key, user.pk)
             print(random_key, user.pk)
 
-            response = HttpResponse("{'status': 'ok'}")
-            response.set_cookie("sessionid", random_key)
+            # Используем Response для установки cookie
+            response = Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
+            response.set_cookie("session_id", random_key, httponly=True, secure=False)
             print(random_key)
 
-            login(request, user)
-            return Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
+            return response
         return Response({"error": "Неверные данные."}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 
 class UserLogoutView(APIView):
     authentication_classes = []
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         responses={
