@@ -62,7 +62,7 @@ class ConfigurationElementsView(APIView):
     )
     def post(self, request, format=None):
         # Получаем куку session_id безопасно
-        ssid = request.COOKIES.get("session_id")
+        ssid = request.COOKIES.get("sessionid")
         if not ssid:
             return Response(
                 {"error": "Необходима аутентификация."},
@@ -111,7 +111,7 @@ class ConfigurationElementsView(APIView):
     )
     def get(self, request, format=None):
         # Получаем куку session_id
-        session_id = request.COOKIES.get("session_id")
+        session_id = request.COOKIES.get("sessionid")
         if not session_id:
             return Response(
                 {"error": "Необходима аутентификация."},
@@ -208,7 +208,7 @@ class ConfigurationElementView(APIView):
     )
     def delete(self, request, pk, format=None):
         # Проверяем сессию через куки
-        session_id = request.COOKIES.get("session_id")
+        session_id = request.COOKIES.get("sessionid")
         if not session_id:
             return Response(
                 {"error": "Необходима аутентификация."},
@@ -276,7 +276,7 @@ class ConfigurationElementView(APIView):
     )
     def post(self, request, pk):
         # Получаем session_id из куки
-        session_id = request.COOKIES.get("session_id")
+        session_id = request.COOKIES.get("sessionid")
         if not session_id:
             return Response(
                 {"error": "Необходима аутентификация."},
@@ -359,7 +359,7 @@ class ConfigurationElementEditingView(APIView):
     )
     def put(self, request, pk, format=None):
         # Получаем session_id из куки
-        session_id = request.COOKIES.get("session_id")
+        session_id = request.COOKIES.get("sessionid")
         if not session_id:
             return Response(
                 {"error": "Необходима аутентификация."},
@@ -428,7 +428,7 @@ class ConfigurationElementEditingView(APIView):
     )
     def post(self, request, pk, format=None):
         # Получаем session_id из куки
-        session_id = request.COOKIES.get("session_id")
+        session_id = request.COOKIES.get("sessionid")
         if not session_id:
             return Response(
                 {"error": "Необходима аутентификация."},
@@ -488,7 +488,7 @@ class ConfigurationView(APIView):
     )
     def get(self, request, format=None):
         # Получаем session_id из куки
-        session_id = request.COOKIES.get("session_id")
+        session_id = request.COOKIES.get("sessionid")
         if not session_id:
             return Response({"error": "Необходима аутентификация."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -560,7 +560,7 @@ class ConfigurationDetailView(APIView):
         )
 
         # Безопасно получаем session_id из cookies
-        ssid = request.COOKIES.get("session_id")
+        ssid = request.COOKIES.get("sessionid")
         if not ssid:
             return Response({"error": "Необходима аутентификация."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -679,26 +679,22 @@ class ConfigurationFormingView(APIView):
     serializer_class = ConfigurationSerializer
 
     @swagger_auto_schema(
-    request_body=ConfigurationSerializer,
-    operation_summary="Сформировать заявку, обновив её статус на 'Сформирована'"
+        operation_summary="Сформировать заявку, обновив её статус на 'Сформирована'"
     )
     def put(self, request, pk, format=None):
         # Проверяем наличие sessionid в куки
         ssid = request.COOKIES.get("sessionid")
         
         if not ssid:
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'detail': 'No session'}, status=status.HTTP_403_FORBIDDEN)
 
         # Получаем user_id из хранилища сессий
         user_id = session_storage.get(ssid)
         if not user_id:
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-        
+            return Response({'detail': 'No such user'}, status=status.HTTP_403_FORBIDDEN)
+
         # Получаем пользователя по user_id
         user = get_object_or_404(AuthUser, pk=user_id)
-        
-        # Устанавливаем пользователя в request
-        request.user = user
 
         # Получаем конфигурацию по ID
         configuration = get_object_or_404(Configuration, pk=pk)
@@ -713,7 +709,6 @@ class ConfigurationFormingView(APIView):
 
         # Устанавливаем новый статус заявки
         configuration.status = 'created'
-        configuration.moderator = user  # Устанавливаем модератора
         configuration.updated_at = timezone.now()  # Обновляем дату изменения
 
         # Подсчитываем итоговую стоимость
@@ -728,6 +723,7 @@ class ConfigurationFormingView(APIView):
 
 
 
+
 class ConfigurationCompletingView(APIView):
     permission_classes = [AllowAny]
     
@@ -739,18 +735,22 @@ class ConfigurationCompletingView(APIView):
         # Получаем sessionid из куки
         ssid = request.COOKIES.get("sessionid")
         if ssid is None:
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-        
+            return Response({'detail': 'Forbidden: No session ID found in cookies'}, status=status.HTTP_403_FORBIDDEN)
+
         # Получаем пользователя из хранилища сессий
         user_id = session_storage.get(ssid)
         if user_id is None:
             return Response({'error': 'No user found for the session'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # Загружаем пользователя
         user_instance = AuthUser.objects.filter(pk=user_id).first()
         if user_instance is None:
-            return Response({'error': 'No such user'}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'No such user found in the database'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Проверяем права пользователя (сначала на суперпользователя или сотрудника)
+        if not user_instance.is_superuser and not user_instance.is_staff:
+            return Response({'detail': 'Forbidden: You do not have permission to perform this action'}, status=status.HTTP_403_FORBIDDEN)
+
         # Получаем конфигурацию по ID
         configuration = get_object_or_404(Configuration, pk=pk)
 
@@ -763,19 +763,16 @@ class ConfigurationCompletingView(APIView):
         if new_status not in ['completed', 'rejected']:
             return Response({'error': 'Недопустимый статус. Ожидался статус "Завершёна" или "Отклонёна"'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Проверяем права пользователя
-        if user_instance.is_superuser or user_instance.is_staff:
-            # Устанавливаем новый статус и другие данные
-            configuration.status = new_status
-            configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
-            configuration.completed_at = timezone.now()  # Устанавливаем дату завершения
-            configuration.save()
+        # Устанавливаем новый статус и другие данные
+        configuration.status = new_status
+        configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
+        configuration.completed_at = timezone.now()  # Устанавливаем дату завершения
+        configuration.save()
 
-            # Возвращаем обновленные данные конфигурации
-            serializer = ConfigurationSerializer(configuration)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
+        # Возвращаем обновленные данные конфигурации
+        serializer = ConfigurationSerializer(configuration)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class ConfigurationMapView(APIView):
@@ -1078,7 +1075,7 @@ class UserLoginView(APIView):
 
             # Ответ с установкой куки
             response = Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
-            response.set_cookie("session_id", random_key, httponly=True, secure=False)  
+            response.set_cookie("sessionid", random_key, httponly=True, secure=False)  
             return response
 
         return Response({"error": "Неверные данные."}, status=status.HTTP_401_UNAUTHORIZED)
@@ -1101,7 +1098,7 @@ class UserLogoutView(APIView):
         if session_id:
             session_storage.delete(session_id)  # Удалите из вашего хранилища
             response = Response({"message": "Вы вышли из системы."}, status=status.HTTP_200_OK)
-            response.delete_cookie("session_id")  # Удалите куку
+            response.delete_cookie("sessionid")  # Удалите куку
             return response
         return Response({"error": "Необходима аутентификация."}, status=status.HTTP_401_UNAUTHORIZED)
 
