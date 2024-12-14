@@ -107,37 +107,26 @@ class ConfigurationElementsView(APIView):
 
 
     @swagger_auto_schema(
-        operation_summary="Получить список элементов с фильтрацией и добавлением id заявки-черновика"
+    operation_summary="Получить список элементов с фильтрацией и добавлением id заявки-черновика"
     )
     def get(self, request, format=None):
         # Получаем куку session_id
         session_id = request.COOKIES.get("sessionid")
-        if not session_id:
-            return Response(
-                {"error": "Необходима аутентификация."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+        user_instance = None
+        draft_configuration = None
 
-        # Проверяем наличие пользователя в хранилище сессий
-        user_id = session_storage.get(session_id)
-        if not user_id:
-            return Response(
-                {"error": "Сессия недействительна."},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
+        if session_id:
+            # Проверяем наличие пользователя в хранилище сессий
+            user_id = session_storage.get(session_id)
+            if user_id:
+                # Проверяем существование пользователя в базе
+                user_instance = AuthUser.objects.filter(pk=user_id).first()
 
-        # Проверяем существование пользователя в базе
-        user_instance = AuthUser.objects.filter(pk=user_id).first()
-        if not user_instance:
-            return Response(
-                {"error": "Пользователь не найден."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Ищем черновик конфигурации для текущего пользователя
-        draft_configuration = Configuration.objects.filter(
-            status='draft', creator=user_instance
-        ).first()
+                if user_instance:
+                    # Ищем черновик конфигурации для текущего пользователя
+                    draft_configuration = Configuration.objects.filter(
+                        status='draft', creator=user_instance
+                    ).first()
 
         # Получаем параметры фильтрации из запроса
         category = request.query_params.get('category')
@@ -187,12 +176,10 @@ class ConfigurationElementsView(APIView):
 
         return Response(response_data, status=status.HTTP_200_OK)
 
-
-
-    
 class ConfigurationElementView(APIView):
     model_class = ConfigurationElement
     serializer_class = ConfigurationElementSerializer
+    permission_classes = [AllowAny]
 
     @swagger_auto_schema(
         operation_summary="Получить информацию об элементе конфигурации по его идентификатору"
@@ -210,6 +197,7 @@ class ConfigurationElementView(APIView):
         # Проверяем сессию через куки
         session_id = request.COOKIES.get("sessionid")
         if not session_id:
+
             return Response(
                 {"error": "Необходима аутентификация."},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -218,6 +206,7 @@ class ConfigurationElementView(APIView):
         # Получаем ID пользователя из хранилища сессий
         user_id = session_storage.get(session_id)
         if not user_id:
+            
             return Response(
                 {"error": "Сессия недействительна."},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -278,6 +267,7 @@ class ConfigurationElementView(APIView):
         # Получаем session_id из куки
         session_id = request.COOKIES.get("sessionid")
         if not session_id:
+            print("Необходима аутентификация.", request.COOKIES.get("sessionid"))
             return Response(
                 {"error": "Необходима аутентификация."},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -286,6 +276,7 @@ class ConfigurationElementView(APIView):
         # Проверяем наличие пользователя в хранилище сессий
         user_id = session_storage.get(session_id)
         if not user_id:
+            print("Сессия недействительна.")
             return Response(
                 {"error": "Сессия недействительна."},
                 status=status.HTTP_401_UNAUTHORIZED
@@ -294,6 +285,7 @@ class ConfigurationElementView(APIView):
         # Проверяем существование пользователя в базе
         user_instance = AuthUser.objects.filter(pk=user_id).first()
         if not user_instance:
+            print("Пользователь не найден.")
             return Response(
                 {"error": "Пользователь не найден."},
                 status=status.HTTP_404_NOT_FOUND
@@ -319,6 +311,7 @@ class ConfigurationElementView(APIView):
         ).exists()
 
         if existing_element:
+            print("Этот элемент уже добавлен в конфигурацию.")
             return Response(
                 {"error": "Этот элемент уже добавлен в конфигурацию."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -551,7 +544,7 @@ class ConfigurationDetailView(APIView):
     permission_classes = [AllowAny]
 
     @swagger_auto_schema(
-        operation_summary="Получить конфигурацию по идентификатору с её элементами и изображениями"
+    operation_summary="Получить конфигурацию по идентификатору с её элементами, изображениями и количеством"
     )
     def get(self, request, pk, format=None):
         # Получаем конфигурацию по id
@@ -581,70 +574,71 @@ class ConfigurationDetailView(APIView):
         # Сериализуем конфигурацию
         serializer = self.serializer_class(configuration)
 
-        # Получаем услуги и их изображения
-        configuration_elements = [
-            {
-                "service_name": map.element.name,
-                "image": map.element.image if map.element.image else None,
-                "price": map.element.price,
-                "key_info": map.element.key_info,
-                "category": map.element.category,
-                "detail_text": map.element.detail_text,
-            }
-            for map in configuration.configurationmap_set.all()
-        ]
+        # Получаем элементы и сопутствующие количества
+        configuration_elements = [map_entry.element for map_entry in configuration.configurationmap_set.all()]
 
-        # Возвращаем данные с конфигурацией и списком услуг
+        element_counts = {index: map_entry.count for index, map_entry in enumerate(configuration.configurationmap_set.all())}
+
+
+        # Возвращаем данные с конфигурацией, элементами и их количеством отдельно
         return Response({
             "configuration": serializer.data,
-            "configuration_elements": configuration_elements
+            "configuration_elements": ConfigurationElementSerializer(configuration_elements, many=True).data,
+            "counts": element_counts,  # Сопоставление pk элементов и количества
         }, status=status.HTTP_200_OK)
+
+
 
     
     @swagger_auto_schema(
-        request_body=ConfigurationSerializer,
-        responses={
-            200: openapi.Response('Success', ConfigurationSerializer),
-            400: openapi.Response('Bad Request'),
-        },
-        operation_summary="Обновить конфигурацию по идентификатору"
+    request_body=ConfigurationSerializer,
+    responses={
+        200: openapi.Response('Success', ConfigurationSerializer),
+        400: openapi.Response('Bad Request'),
+    },
+    operation_summary="Обновить конфигурацию по идентификатору"
     )
     def put(self, request, pk, format=None):
         # Получаем куку sessionid
         ssid = request.COOKIES.get("sessionid")
         if ssid is None:
+            print("Error: Session ID is missing.")
             return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Получаем user_id из хранилища сессий
         user_id = session_storage.get(ssid)
         if user_id is None:
+            print("Error: User ID not found in session storage.")
             return Response({"error": "User session is invalid."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Проверяем существование пользователя в базе
         user_instance = AuthUser.objects.filter(pk=user_id).first()
         if not user_instance:
+            print(f"Error: User with ID {user_id} not found.")
             return Response({"error": "User not found."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Проверка прав пользователя (только администратор или стафф)
-        if not (user_instance.is_superuser or user_instance.is_staff):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
-        # Получаем конфигурацию по id
+        # Проверка прав пользователя (только администратор, стафф или создатель конфигурации)
         configuration = get_object_or_404(self.model_class, pk=pk)
+        if not (user_instance.is_superuser or user_instance.is_staff or configuration.creator == user_instance):
+            print(f"Error: User {user_instance.username} does not have permission to update configuration {pk}.")
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Обновляем поля конфигурации
         serializer = self.serializer_class(configuration, data=request.data, partial=True)  # partial=True для частичного обновления
 
         if serializer.is_valid():
             serializer.save()  # Сохраняем изменения
+            print(f"Success: Configuration {pk} updated successfully.")
             return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
         
+        print(f"Error: Serializer validation failed for data: {request.data}. Errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)  # Если есть ошибки валидации
 
 
 
+
     @swagger_auto_schema(
-        operation_summary="Удалить конфигурацию, обновив её статус на 'deleted'"
+    operation_summary="Удалить конфигурацию, обновив её статус на 'deleted'"
     )
     def delete(self, request, pk, format=None):
         # Получаем session_id из куки
@@ -658,12 +652,14 @@ class ConfigurationDetailView(APIView):
         user_id = session_storage.get(ssid)
         user_instance = AuthUser.objects.filter(pk=user_id).first()
 
-        # Проверяем, существует ли пользователь и имеет ли он необходимые права
-        if not user_instance or not (user_instance.is_superuser or user_instance.is_staff):
-            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
-
         # Получаем конфигурацию по id
-        configuration = get_object_or_404(self.model_class, pk=pk)
+        configuration = get_object_or_404(Configuration, pk=pk)
+
+        # Проверяем, существует ли пользователь и имеет ли он необходимые права
+        if not user_instance or not (
+            user_instance.is_superuser or user_instance.is_staff or configuration.creator == user_instance
+        ):
+            return Response({'detail': 'Forbidden'}, status=status.HTTP_403_FORBIDDEN)
 
         # Обновляем статус конфигурации на 'deleted'
         configuration.status = 'deleted'
@@ -1073,14 +1069,19 @@ class UserLoginView(APIView):
             random_key = str(uuid.uuid4())
             session_storage.set(random_key, user.pk)
 
-            # Ответ с установкой куки
-            response = Response({"message": "Вход успешен."}, status=status.HTTP_200_OK)
-            response.set_cookie("sessionid", random_key, httponly=True, secure=False)  
+            # Ответ с установкой куки и добавлением is_staff
+            response = Response(
+                {
+                    "message": "Вход успешен.",
+                    "is_staff": user.is_staff  # Добавляем информацию о роли
+                }, 
+                status=status.HTTP_200_OK
+            )
+            print(random_key)
+            response.set_cookie("sessionid", random_key, httponly=True, secure=True, samesite='None')  
             return response
 
         return Response({"error": "Неверные данные."}, status=status.HTTP_401_UNAUTHORIZED)
-
-
 
 
 class UserLogoutView(APIView):
@@ -1094,11 +1095,11 @@ class UserLogoutView(APIView):
         operation_summary="Выйти из системы"
     )
     def post(self, request):
-        session_id = request.COOKIES.get('session_id')
+        session_id = request.COOKIES.get('sessionid')
         if session_id:
             session_storage.delete(session_id)  # Удалите из вашего хранилища
             response = Response({"message": "Вы вышли из системы."}, status=status.HTTP_200_OK)
-            response.delete_cookie("sessionid")  # Удалите куку
+            # response.delete_cookie("sessionid")  # Удалите куку
             return response
         return Response({"error": "Необходима аутентификация."}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -1112,15 +1113,6 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = AuthUser.objects.all()
     serializer_class = UserSerializer
     model_class = AuthUser
-
-    def get_permissions(self):
-        if self.action in ['create']:
-            permission_classes = [AllowAny]
-        elif self.action in ['list']:
-            permission_classes = [IsAdmin | IsManager]
-        else:
-            permission_classes = [IsAdmin]
-        return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
         """
@@ -1143,6 +1135,71 @@ class UserViewSet(viewsets.ModelViewSet):
             )
             return Response({'status': 'Success'}, status=status.HTTP_201_CREATED)
         return Response({'status': 'Error', 'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], url_path='me')
+    def get_user_profile(self, request):
+        """
+        Метод для получения информации о текущем пользователе.
+        """
+        user_id = check_session(request)
+        if not user_id:
+            return Response({'error': 'Не авторизован'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user = self.queryset.get(id=user_id)
+        serializer = self.serializer_class(user)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['put', 'patch'])
+    def update_profile(self, request, pk=None):
+        """
+        Метод для обновления данных текущего пользователя.
+        """
+        user_id = check_session(request)
+        if not user_id or user_id != pk:
+            return Response({'error': 'Нет доступа к этим данным'}, status=status.HTTP_403_FORBIDDEN)
+        
+        user = self.queryset.get(id=pk)
+        print(pk)
+        serializer = self.serializer_class(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            password = serializer.validated_data.get('password')
+            print(password)
+            if password:
+                serializer.validated_data['password'] = make_password(password)
+                print(make_password(password))
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['get'], url_path='get-id-by-username')
+    def get_user_id_by_username(self, request):
+        """
+        Метод для получения ID пользователя по логину.
+        """
+        # Печатаем куки для проверки наличия сессии
+        print("Сессии из куков:", request.COOKIES)
+
+        username = request.query_params.get('username')
+        if not username:
+            return Response({'error': 'Логин не указан'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = self.model_class.objects.get(username=username)
+            return Response({'id': user.id}, status=status.HTTP_200_OK)
+        except self.model_class.DoesNotExist:
+            return Response({'error': 'Пользователь не найден'}, status=status.HTTP_404_NOT_FOUND)
+
+# Вспомогательная функция для проверки сессии
+def check_session(request):
+    session_id = request.COOKIES.get("sessionid")
+    if not session_id:
+        return None  # Сессия не найдена
+
+    pk = session_storage.get(session_id)
+    if pk is None:
+        return None  # Сессия невалидна или истекла
+
+    return pk
     
 def method_permission_classes(classes):
     def decorator(func):
@@ -1152,15 +1209,3 @@ def method_permission_classes(classes):
             return func(self, *args, **kwargs)
         return decorated_func
     return decorator
-
-def check_session(request):
-    session_id = request.COOKIES.get("sessionid")
-    print(session_id)
-    if session_id is None:
-        return None  # Сессия не найдена
-
-    pk = session_storage.get(session_id)
-    if pk is None:
-        return None  # Сессия невалидна или истекла
-
-    return pk
