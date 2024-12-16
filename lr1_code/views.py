@@ -219,15 +219,14 @@ class ConfigurationElementView(APIView):
                 {"error": "Пользователь не найден."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+        configuration_element = get_object_or_404(self.model_class, pk=pk)
 
         # Проверяем права пользователя
         if user_instance.is_superuser or user_instance.is_staff:
             # Администраторы и менеджеры могут удалять любые элементы
             pass
         else:
-            # Получаем элемент конфигурации
-            configuration_element = get_object_or_404(self.model_class, pk=pk)
-
             # Проверяем, является ли пользователь создателем элемента
             if configuration_element.creator != user_instance:
                 return Response(
