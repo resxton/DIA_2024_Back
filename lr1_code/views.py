@@ -91,9 +91,12 @@ class ConfigurationElementsView(APIView):
                 {"detail": "Доступ запрещен."},
                 status=status.HTTP_403_FORBIDDEN
             )
+        
+        # Валидация данных
+        data = request.data.copy()  # Создаём копию данных запроса
 
         # Валидация данных
-        serializer = ConfigurationElementSerializer(data=request.data)
+        serializer = ConfigurationElementSerializer(data=data)
         if serializer.is_valid():
             # Сохраняем новый элемент конфигурации
             configuration_element = serializer.save()
@@ -511,11 +514,21 @@ class ConfigurationView(APIView):
         if status_filter:
             configurations = configurations.filter(status=status_filter)
 
+        print(created_after, created_before)
+
+        from datetime import datetime, timedelta
+
         # Применяем фильтрацию по дате создания
         if created_after:
+            # Добавляем начало дня (00:00:00) для фильтрации "с"
+            created_after = datetime.strptime(created_after, '%Y-%m-%d')
             configurations = configurations.filter(created_at__gte=created_after)
+
         if created_before:
+            # Добавляем конец дня (23:59:59) для фильтрации "по"
+            created_before = datetime.strptime(created_before, '%Y-%m-%d') + timedelta(days=1) - timedelta(seconds=1)
             configurations = configurations.filter(created_at__lte=created_before)
+
 
         # Сериализация конфигураций
         serializer = self.serializer_class(configurations, many=True)
@@ -574,9 +587,9 @@ class ConfigurationDetailView(APIView):
         serializer = self.serializer_class(configuration)
 
         # Получаем элементы и сопутствующие количества
-        configuration_elements = [map_entry.element for map_entry in configuration.configurationmap_set.all()]
+        configuration_elements = {map_entry.element for map_entry in configuration.configurationmap_set.all()}
 
-        element_counts = {index: map_entry.count for index, map_entry in enumerate(configuration.configurationmap_set.all())}
+        element_counts = {map_entry.element.pk: map_entry.count for map_entry in configuration.configurationmap_set.all()}
 
 
         # Возвращаем данные с конфигурацией, элементами и их количеством отдельно
@@ -628,6 +641,7 @@ class ConfigurationDetailView(APIView):
         if serializer.is_valid():
             serializer.save()  # Сохраняем изменения
             print(f"Success: Configuration {pk} updated successfully.")
+            print(configuration.customer_email, configuration.customer_name, configuration.customer_phone)
             return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
         
         print(f"Error: Serializer validation failed for data: {request.data}. Errors: {serializer.errors}")
@@ -706,9 +720,6 @@ class ConfigurationFormingView(APIView):
         configuration.status = 'created'
         configuration.updated_at = timezone.now()  # Обновляем дату изменения
 
-        # Подсчитываем итоговую стоимость
-        configuration.calculate_total_price()
-
         # Сохраняем изменения
         configuration.save()
 
@@ -761,6 +772,9 @@ class ConfigurationCompletingView(APIView):
         # Устанавливаем новый статус и другие данные
         configuration.status = new_status
         configuration.moderator = user_instance  # Устанавливаем текущего пользователя как модератора
+        if new_status == 'completed':
+            # Подсчитываем итоговую стоимость
+            configuration.calculate_total_price()
         configuration.completed_at = timezone.now()  # Устанавливаем дату завершения
         configuration.save()
 
@@ -890,6 +904,13 @@ class ConfigurationMapView(APIView):
             element_id=element_id
         )
 
+        # Проверяем, если count == 0, то удаляем элемент
+        count = request.data.get('count')
+        if count == 0:
+            # Удаляем объект ConfigurationMap, если количество становится 0
+            configuration_map.delete()
+            return Response({"message": "Element removed from configuration due to count being 0."}, status=status.HTTP_204_NO_CONTENT)
+
         # Обновляем только те поля, которые переданы в запросе
         serializer = self.serializer_class(configuration_map, data=request.data, partial=True)
 
@@ -898,6 +919,7 @@ class ConfigurationMapView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)  # Возвращаем обновленные данные
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     
 class UsersList(APIView):
