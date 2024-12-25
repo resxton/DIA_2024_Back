@@ -1099,7 +1099,7 @@ class UserLoginView(APIView):
                 status=status.HTTP_200_OK
             )
             print(random_key)
-            response.set_cookie("sessionid", random_key, httponly=True, secure=True, samesite='None')  
+            response.set_cookie("sessionid", random_key, secure=False, httponly=True, samesite='None', max_age=600)
             return response
 
         return Response({"error": "Неверные данные."}, status=status.HTTP_401_UNAUTHORIZED)
